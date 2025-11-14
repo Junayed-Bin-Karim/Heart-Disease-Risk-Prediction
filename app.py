@@ -3,6 +3,20 @@ import pandas as pd
 import numpy as np
 import os
 
+st.set_page_config(
+    page_title="Heart Disease Predictor", 
+    page_icon="❤️", 
+    layout="centered"
+)
+
+st.title("Heart Disease Risk Assessment")
+st.warning("⚠️ Model compatibility issue detected. Working on a fix...")
+
+# Your input fields here (same as before)
+# But without the prediction functionality for now
+
+st.info("The prediction feature is temporarily disabled due to technical issues. We're working to resolve this quickly.")
+
 # -----------------------------
 # 🎯 Page Config
 # -----------------------------
@@ -319,5 +333,6 @@ with footer_col2:
     st.markdown("""
     Built by Junayed Bin Karim  
     """)
+
 
 
