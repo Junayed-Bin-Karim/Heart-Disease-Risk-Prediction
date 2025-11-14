@@ -1,12 +1,21 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
-import gdown
 import os
 
+# Try to import optional dependencies
+try:
+    import joblib
+except ImportError:
+    st.error("joblib is required but not installed. Please add it to requirements.txt")
+    
+try:
+    import gdown
+except ImportError:
+    st.error("gdown is required but not installed. Please add it to requirements.txt")
+
 # -----------------------------
-# 🎯 Page Config
+# 🎯 Page Config - MUST BE FIRST STREAMLIT COMMAND
 # -----------------------------
 st.set_page_config(
     page_title="Heart Disease Predictor", 
@@ -16,18 +25,39 @@ st.set_page_config(
 )
 
 # -----------------------------
-# 🧠 Load Model & Scaler
+# 🧠 Load Model & Scaler with Error Handling
 # -----------------------------
-model_path = "heart_stack_model.joblib"
-scaler_path = "scaler.joblib"
+@st.cache_resource
+def load_models():
+    model_path = "heart_stack_model.joblib"
+    scaler_path = "scaler.joblib"
+    
+    model = None
+    scaler = None
+    
+    try:
+        # Download model if not exists
+        if not os.path.exists(model_path):
+            with st.spinner("📥 Downloading model file..."):
+                import gdown
+                url = "https://drive.google.com/uc?id=1ikGCWp47yKL-5UbbpY7JH2M79LPeoVLb"
+                gdown.download(url, model_path, quiet=True)
+        
+        # Load model and scaler
+        if os.path.exists(model_path) and os.path.exists(scaler_path):
+            model = joblib.load(model_path)
+            scaler = joblib.load(scaler_path)
+            st.success("✅ Models loaded successfully!")
+        else:
+            st.error(f"❌ Model files not found. Please ensure {model_path} and {scaler_path} exist.")
+            
+    except Exception as e:
+        st.error(f"❌ Error loading models: {str(e)}")
+    
+    return model, scaler
 
-# Download large model from Google Drive if not exists
-if not os.path.exists(model_path):
-    url = "https://drive.google.com/uc?id=1ikGCWp47yKL-5UbbpY7JH2M79LPeoVLb"
-    gdown.download(url, model_path, quiet=False)
-
-model = joblib.load(model_path)
-scaler = joblib.load(scaler_path)  # Load scaler from local repo
+# Load models
+model, scaler = load_models()
 
 # -----------------------------
 # 🎨 Custom CSS for Better Styling
@@ -79,6 +109,10 @@ with st.container():
     st.markdown('<div class="info-box">', unsafe_allow_html=True)
     st.markdown("**📋 Important Note:** This tool provides a *risk prediction* based on statistical models, not a medical diagnosis. Always consult healthcare professionals for medical advice.")
     st.markdown('</div>', unsafe_allow_html=True)
+
+# Show warning if models aren't loaded
+if model is None or scaler is None:
+    st.warning("⚠️ Models not loaded. Prediction functionality will not work until models are properly loaded.")
 
 # -----------------------------
 # 🧍‍♂️ User Inputs with Better Organization
@@ -156,99 +190,104 @@ predict_col1, predict_col2, predict_col3 = st.columns([1, 2, 1])
 with predict_col2:
     predict_btn = st.button("**🎯 Calculate My Heart Disease Risk**", 
                           type="primary", 
-                          use_container_width=True)
+                          use_container_width=True,
+                          disabled=(model is None or scaler is None))
 
-if predict_btn:
-    if model is None or scaler is None:  # Fixed typo: changed 'scalator' to 'scaler'
-        st.error("❌ Model not loaded. Please check if model files are available.")
-    else:
-        # Show loading spinner
-        with st.spinner("🔬 Analyzing your health data..."):
-            # Prepare data
-            df = pd.DataFrame([{
-                'gender': gender,
-                'weight': weight,
-                'ap_hi': ap_hi,
-                'ap_lo': ap_lo,
-                'cholesterol': cholesterol,
-                'gluc': gluc,
-                'smoke': smoke,
-                'alco': alco,
-                'active': active,
-                'age_years': age_years,
-                'height_m': height / 100
-            }])
+if predict_btn and model is not None and scaler is not None:
+    # Show loading spinner
+    with st.spinner("🔬 Analyzing your health data..."):
+        # Prepare data
+        df = pd.DataFrame([{
+            'gender': gender,
+            'weight': weight,
+            'ap_hi': ap_hi,
+            'ap_lo': ap_lo,
+            'cholesterol': cholesterol,
+            'gluc': gluc,
+            'smoke': smoke,
+            'alco': alco,
+            'active': active,
+            'age_years': age_years,
+            'height_m': height / 100
+        }])
 
+        try:
             # Make prediction
             X_scaled = scaler.transform(df)
             prediction = model.predict(X_scaled)[0]
             probability = model.predict_proba(X_scaled)[0][1] * 100
 
-        # -----------------------------
-        # 💬 Enhanced Output Result
-        # -----------------------------
-        st.markdown("## 📊 Assessment Results")
-        
-        # Progress bar for risk visualization
-        st.subheader("Risk Level")
-        risk_progress = probability / 100
-        st.progress(risk_progress)
-        st.caption(f"Estimated Risk Probability: **{probability:.1f}%**")
+            # -----------------------------
+            # 💬 Enhanced Output Result
+            # -----------------------------
+            st.markdown("## 📊 Assessment Results")
+            
+            # Progress bar for risk visualization
+            st.subheader("Risk Level")
+            risk_progress = probability / 100
+            st.progress(risk_progress)
+            st.caption(f"Estimated Risk Probability: **{probability:.1f}%**")
 
-        # Result with better visual styling
-        if prediction == 1:
-            st.markdown('<div class="risk-high">', unsafe_allow_html=True)
-            st.markdown("## ⚠️ Higher Risk Detected")
-            st.markdown(f"**Risk Probability:** `{probability:.1f}%`")
-            st.markdown("""
-            ### 🩺 Recommended Actions:
-            
-            **Immediate Steps:**
-            - 📞 Consult a healthcare provider soon
-            - 🩺 Schedule a comprehensive check-up
-            - 📊 Monitor blood pressure regularly
-            
-            **Lifestyle Changes:**
-            - 🥗 Adopt a heart-healthy diet (low salt, sugar, saturated fats)
-            - 🚴‍♂️ Increase physical activity (30+ minutes daily)
-            - 🚭 Completely avoid tobacco products
-            - 🍷 Limit or eliminate alcohol consumption
-            - 😴 Ensure 7-8 hours of quality sleep
-            - 🧘 Practice stress management techniques
-            """)
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-        else:
-            st.markdown('<div class="risk-low">', unsafe_allow_html=True)
-            st.markdown("## ✅ Lower Risk Profile")
-            st.markdown(f"**Risk Probability:** `{probability:.1f}%`")
-            st.markdown("""
-            ### 💡 Maintenance Tips:
-            
-            **Keep up the good work! Continue with:**
-            - 🏃 Regular physical activity
-            - 🥑 Balanced, nutritious diet
-            - ⚖️ Healthy weight maintenance
-            - 🧘 Stress management practices
-            
-            **Preventive Care:**
-            - 📅 Routine health check-ups annually
-            - 🩺 Regular blood pressure monitoring
-            - 🧪 Periodic cholesterol and glucose tests
-            - 💤 Quality sleep and recovery
-            """)
-            st.markdown('</div>', unsafe_allow_html=True)
+            # Result with better visual styling
+            if prediction == 1:
+                st.markdown('<div class="risk-high">', unsafe_allow_html=True)
+                st.markdown("## ⚠️ Higher Risk Detected")
+                st.markdown(f"**Risk Probability:** `{probability:.1f}%`")
+                st.markdown("""
+                ### 🩺 Recommended Actions:
+                
+                **Immediate Steps:**
+                - 📞 Consult a healthcare provider soon
+                - 🩺 Schedule a comprehensive check-up
+                - 📊 Monitor blood pressure regularly
+                
+                **Lifestyle Changes:**
+                - 🥗 Adopt a heart-healthy diet (low salt, sugar, saturated fats)
+                - 🚴‍♂️ Increase physical activity (30+ minutes daily)
+                - 🚭 Completely avoid tobacco products
+                - 🍷 Limit or eliminate alcohol consumption
+                - 😴 Ensure 7-8 hours of quality sleep
+                - 🧘 Practice stress management techniques
+                """)
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+            else:
+                st.markdown('<div class="risk-low">', unsafe_allow_html=True)
+                st.markdown("## ✅ Lower Risk Profile")
+                st.markdown(f"**Risk Probability:** `{probability:.1f}%`")
+                st.markdown("""
+                ### 💡 Maintenance Tips:
+                
+                **Keep up the good work! Continue with:**
+                - 🏃 Regular physical activity
+                - 🥑 Balanced, nutritious diet
+                - ⚖️ Healthy weight maintenance
+                - 🧘 Stress management practices
+                
+                **Preventive Care:**
+                - 📅 Routine health check-ups annually
+                - 🩺 Regular blood pressure monitoring
+                - 🧪 Periodic cholesterol and glucose tests
+                - 💤 Quality sleep and recovery
+                """)
+                st.markdown('</div>', unsafe_allow_html=True)
 
-        # Additional health metrics
-        with st.expander("📈 View Health Metrics Summary"):
-            col_met1, col_met2, col_met3 = st.columns(3)
-            with col_met1:
-                st.metric("BMI", f"{bmi:.1f}")
-            with col_met2:
-                bp_status = "Normal" if (ap_hi < 130 and ap_lo < 85) else "Monitor"
-                st.metric("Blood Pressure", bp_status)
-            with col_met3:
-                st.metric("Physical Activity", "Active" if active == 1 else "Inactive")
+            # Additional health metrics
+            with st.expander("📈 View Health Metrics Summary"):
+                col_met1, col_met2, col_met3 = st.columns(3)
+                with col_met1:
+                    st.metric("BMI", f"{bmi:.1f}")
+                with col_met2:
+                    bp_status = "Normal" if (ap_hi < 130 and ap_lo < 85) else "Monitor"
+                    st.metric("Blood Pressure", bp_status)
+                with col_met3:
+                    st.metric("Physical Activity", "Active" if active == 1 else "Inactive")
+                    
+        except Exception as e:
+            st.error(f"❌ Error during prediction: {str(e)}")
+
+elif predict_btn:
+    st.error("❌ Cannot make prediction - models are not loaded properly.")
 
 # -----------------------------
 # 📘 Footer
