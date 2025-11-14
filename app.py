@@ -1,9 +1,4 @@
-streamlit
-pandas
-numpy
-scikit-learn
-joblib
-gdown
+
 
 
 # -----------------------------
@@ -264,5 +259,6 @@ with footer_col2:
     st.markdown("""
     Built by Junayed Bin Karim  
     """)
+
 
 
