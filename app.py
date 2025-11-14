@@ -41,7 +41,7 @@ def load_models():
         # Load scaler first (usually less compatibility issues)
         if os.path.exists(scaler_path):
             scaler = joblib.load(scaler_path)
-            st.success("✅ Scaler loaded successfully!")
+            st.success(" Scaler loaded successfully!")
         else:
             st.error(f"❌ Scaler file '{scaler_path}' not found.")
         
@@ -49,7 +49,7 @@ def load_models():
         if os.path.exists(model_path):
             try:
                 model = joblib.load(model_path)
-                st.success("✅ Model loaded successfully!")
+                st.success(" Model loaded successfully!")
             except Exception as model_error:
                 st.error(f"❌ Model compatibility error: {str(model_error)}")
                 st.info("💡 **Solution:** The model was created with a different scikit-learn version. Please try: pip install scikit-learn==1.2.2")
@@ -132,7 +132,7 @@ st.markdown('<div class="section-header">🩺 Personal & Health Information</div
 # Personal Information
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.subheader("👤 Personal")
+    st.subheader(" Personal")
     age_years = st.number_input("**Age** (years)", min_value=18, max_value=120, value=45, 
                                help="Enter your current age")
     gender = st.selectbox("**Gender**", [1, 2], 
@@ -140,7 +140,7 @@ with col1:
                          help="Select your biological sex")
     
 with col2:
-    st.subheader("📏 Physical")
+    st.subheader(" Physical")
     height = st.slider("**Height** (cm)", min_value=100, max_value=250, value=170, 
                       help="Your height in centimeters")
     weight = st.slider("**Weight** (kg)", min_value=30, max_value=200, value=70, 
@@ -153,7 +153,7 @@ with col2:
         st.metric("**BMI**", f"{bmi:.1f} ({bmi_category})")
 
 with col3:
-    st.subheader("💓 Vital Signs")
+    st.subheader(" Vital Signs")
     ap_hi = st.number_input("**Systolic BP** (mmHg)", min_value=80, max_value=250, value=120,
                            help="Upper number in blood pressure reading")
     ap_lo = st.number_input("**Diastolic BP** (mmHg)", min_value=50, max_value=150, value=80,
@@ -165,12 +165,12 @@ with col3:
 
 # Lifestyle & Health Markers
 st.markdown("---")
-st.markdown('<div class="section-header">🏃 Lifestyle & Health Markers</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header"> Lifestyle & Health Markers</div>', unsafe_allow_html=True)
 
 col4, col5, col6 = st.columns(3)
 
 with col4:
-    st.subheader("🧪 Blood Work")
+    st.subheader(" Blood Work")
     cholesterol = st.selectbox("**Cholesterol Level**", [1, 2, 3], 
                               format_func=lambda x: ["Normal", "Above Normal", "Well Above Normal"][x-1],
                               help="Your cholesterol level based on recent tests")
@@ -179,27 +179,27 @@ with col4:
                        help="Your blood glucose level")
 
 with col5:
-    st.subheader("🚬 Habits")
+    st.subheader(" Habits")
     smoke = st.radio("**Smoking Status**", [0, 1], 
-                    format_func=lambda x: "🚭 Non-smoker" if x == 0 else "🚬 Smoker",
+                    format_func=lambda x: " Non-smoker" if x == 0 else " Smoker",
                     help="Regular tobacco use")
     alco = st.radio("**Alcohol Consumption**", [0, 1], 
-                   format_func=lambda x: "🍹 Non-drinker" if x == 0 else "🍷 Drinker",
+                   format_func=lambda x: " Non-drinker" if x == 0 else " Drinker",
                    help="Regular alcohol consumption")
 
 with col6:
-    st.subheader("🏃 Activity")
+    st.subheader(" Activity")
     active = st.radio("**Physical Activity**", [1, 0], 
-                     format_func=lambda x: "✅ Active" if x == 1 else "❌ Not Active",
+                     format_func=lambda x: " Active" if x == 1 else " Not Active",
                      help="Regular physical exercise")
 
 # -----------------------------
 # 🧮 Health Assessment (Demo Mode)
 # -----------------------------
 st.markdown("---")
-st.markdown('<div class="section-header">🔍 Health Assessment</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header"> Health Assessment</div>', unsafe_allow_html=True)
 
-assess_btn = st.button("**📊 Get Health Assessment**", type="primary", use_container_width=True)
+assess_btn = st.button("** Get Health Assessment**", type="primary", use_container_width=True)
 
 if assess_btn:
     with st.spinner("Analyzing your health profile..."):
@@ -210,47 +210,47 @@ if assess_btn:
         # Age factor
         if age_years > 45:
             risk_factors += 1
-            recommendations.append("👴 **Age**: Consider more frequent health check-ups")
+            recommendations.append(" **Age**: Consider more frequent health check-ups")
         
         # BMI factor
         if bmi >= 25:
             risk_factors += 1
-            recommendations.append("⚖️ **Weight**: Maintain healthy weight through diet and exercise")
+            recommendations.append(" **Weight**: Maintain healthy weight through diet and exercise")
         elif bmi < 18.5:
             risk_factors += 1
-            recommendations.append("⚖️ **Weight**: Consider nutritional support for healthy weight gain")
+            recommendations.append(" **Weight**: Consider nutritional support for healthy weight gain")
         
         # Blood Pressure factor
         if ap_hi >= 130 or ap_lo >= 85:
             risk_factors += 1
-            recommendations.append("💓 **Blood Pressure**: Monitor regularly and consult if consistently high")
+            recommendations.append("**Blood Pressure**: Monitor regularly and consult if consistently high")
         
         # Lifestyle factors
         if smoke == 1:
             risk_factors += 2
-            recommendations.append("🚭 **Smoking**: Consider smoking cessation programs")
+            recommendations.append(" **Smoking**: Consider smoking cessation programs")
         
         if active == 0:
             risk_factors += 1
-            recommendations.append("🏃 **Activity**: Aim for 150 minutes of moderate exercise weekly")
+            recommendations.append(" **Activity**: Aim for 150 minutes of moderate exercise weekly")
         
         if cholesterol > 1:
             risk_factors += 1
-            recommendations.append("🧪 **Cholesterol**: Follow heart-healthy diet low in saturated fats")
+            recommendations.append(" **Cholesterol**: Follow heart-healthy diet low in saturated fats")
         
         if gluc > 1:
             risk_factors += 1
-            recommendations.append("🩸 **Glucose**: Monitor blood sugar and maintain balanced diet")
+            recommendations.append("**Glucose**: Monitor blood sugar and maintain balanced diet")
         
         # Display assessment
-        st.markdown("## 📋 Health Assessment Summary")
+        st.markdown("##  Health Assessment Summary")
         
         if risk_factors <= 2:
             st.markdown('<div class="risk-low">', unsafe_allow_html=True)
-            st.markdown("## ✅ Good Health Profile")
+            st.markdown("##  Good Health Profile")
             st.markdown(f"**Risk Factors Identified:** {risk_factors} (Low)")
             st.markdown("""
-            ### 💡 Keep up the good work!
+            ###  Keep up the good work!
             Your current health profile shows good indicators. Continue with:
             - Regular physical activity
             - Balanced nutrition
@@ -260,7 +260,7 @@ if assess_btn:
             
         elif risk_factors <= 4:
             st.markdown('<div class="info-box">', unsafe_allow_html=True)
-            st.markdown("## ⚠️ Moderate Health Profile")
+            st.markdown("##  Moderate Health Profile")
             st.markdown(f"**Risk Factors Identified:** {risk_factors} (Moderate)")
             st.markdown("""
             ### 🩺 Areas for Improvement:
@@ -270,17 +270,17 @@ if assess_btn:
             
         else:
             st.markdown('<div class="risk-high">', unsafe_allow_html=True)
-            st.markdown("## 🔴 Higher Risk Profile")
+            st.markdown("##  Higher Risk Profile")
             st.markdown(f"**Risk Factors Identified:** {risk_factors} (High)")
             st.markdown("""
-            ### 🚨 Recommended Actions:
+            ###  Recommended Actions:
             Consider consulting healthcare professionals for personalized advice.
             """)
             st.markdown('</div>', unsafe_allow_html=True)
         
         # Show recommendations
         if recommendations:
-            with st.expander("📝 Personalized Recommendations"):
+            with st.expander(" Personalized Recommendations"):
                 for rec in recommendations:
                     st.write(f"• {rec}")
         
@@ -303,3 +303,4 @@ with footer_col2:
     st.markdown("""
     Built by Junayed Bin Karim  
     """)
+
