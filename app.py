@@ -1,6 +1,4 @@
 
-
-
 # -----------------------------
 # 🎯 Page Config
 # -----------------------------
@@ -259,6 +257,7 @@ with footer_col2:
     st.markdown("""
     Built by Junayed Bin Karim  
     """)
+
 
 
 
