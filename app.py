@@ -152,10 +152,12 @@ st.markdown("""
 st.markdown('<div class="main-header">Heart Disease Risk Assessment</div>', unsafe_allow_html=True)
 
 st.markdown("""
-আপনার হৃদরোগ ঝুঁকি মূল্যায়ন করুন গুরুত্বপূর্ণ স্বাস্থ্য সূচক এবং জীবনধারার ভিত্তিতে।  
-আমাদের মডেলটি ৭০,০০০ এর বেশি বৈজ্ঞানিক ডেটা ব্যবহার করে প্রশিক্ষিত।  
+Assess your risk of heart disease based on important health indicators and lifestyle factors.  
+Our model is trained using over 70,000 scientific data points.  
 
+Created by **Junayed Bin Karim**
 """)
+
 
 
 # Show model status
@@ -366,6 +368,7 @@ st.markdown("""
 
 *Built by Junayed Bin Karim*
 """)
+
 
 
 
