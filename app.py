@@ -154,8 +154,7 @@ st.markdown('<div class="main-header">Heart Disease Risk Assessment</div>', unsa
 st.markdown("""
 আপনার হৃদরোগ ঝুঁকি মূল্যায়ন করুন গুরুত্বপূর্ণ স্বাস্থ্য সূচক এবং জীবনধারার ভিত্তিতে।  
 আমাদের মডেলটি ৭০,০০০ এর বেশি বৈজ্ঞানিক ডেটা ব্যবহার করে প্রশিক্ষিত।  
-এই মডেলটি Random Forest, Gradient Boosting, Support Vector Classifier (SVC) ব্যবহার করে শেখানো হয়েছে এবং চূড়ান্ত সিদ্ধান্ত নেওয়া হয় Logistic Regression দ্বারা।  
-ফলাফল আরও নির্ভরযোগ্য।
+
 """)
 
 
@@ -367,5 +366,6 @@ st.markdown("""
 
 *Built by Junayed Bin Karim*
 """)
+
 
 
