@@ -1,3 +1,9 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import joblib
+import gdown
+import os
 
 # -----------------------------
 # 🎯 Page Config
@@ -17,7 +23,7 @@ scaler_path = "scaler.joblib"
 
 # Download large model from Google Drive if not exists
 if not os.path.exists(model_path):
-    url = "https://drive.google.com/uc?id=1ikGCWp47yKL-5UbbpY7JH2M79LPeoVLb"  # <- corrected
+    url = "https://drive.google.com/uc?id=1ikGCWp47yKL-5UbbpY7JH2M79LPeoVLb"
     gdown.download(url, model_path, quiet=False)
 
 model = joblib.load(model_path)
@@ -153,7 +159,7 @@ with predict_col2:
                           use_container_width=True)
 
 if predict_btn:
-    if model is None or scalator is None:
+    if model is None or scaler is None:  # Fixed typo: changed 'scalator' to 'scaler'
         st.error("❌ Model not loaded. Please check if model files are available.")
     else:
         # Show loading spinner
@@ -257,7 +263,3 @@ with footer_col2:
     st.markdown("""
     Built by Junayed Bin Karim  
     """)
-
-
-
-
