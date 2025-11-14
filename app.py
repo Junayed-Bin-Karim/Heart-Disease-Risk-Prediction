@@ -1,26 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
-import gdown
 import os
 
-# Add this compatibility fix function
-def fix_sklearn_compatibility():
-    """Fix for scikit-learn version compatibility issues with saved models"""
-    try:
-        from sklearn.tree._tree import Tree
-        # This will force the correct dtype structure
-        return True
-    except ImportError as e:
-        st.error(f"Scikit-learn compatibility issue: {e}")
-        return False
-
-# Call the fix
-fix_sklearn_compatibility()
-
 # -----------------------------
-# 🎯 Page Config - MUST BE FIRST STREAMLIT COMMAND
+# 🎯 Page Config
 # -----------------------------
 st.set_page_config(
     page_title="Heart Disease Predictor", 
@@ -29,8 +13,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Try to import with error handling
+try:
+    import joblib
+    import gdown
+    from sklearn.exceptions import SklearnException
+except ImportError as e:
+    st.error(f"Required package missing: {e}")
+
 # -----------------------------
-# 🧠 Load Model & Scaler with Error Handling
+# 🧠 Load Model & Scaler with Compatibility Fix
 # -----------------------------
 @st.cache_resource
 def load_models():
@@ -39,30 +31,50 @@ def load_models():
     
     model = None
     scaler = None
+    error_message = ""
     
     try:
         # Download model if not exists
         if not os.path.exists(model_path):
             with st.spinner("📥 Downloading model file..."):
-                import gdown
                 url = "https://drive.google.com/uc?id=1ikGCWp47yKL-5UbbpY7JH2M79LPeoVLb"
                 gdown.download(url, model_path, quiet=True)
         
-        # Load model and scaler
-        if os.path.exists(model_path) and os.path.exists(scaler_path):
-            model = joblib.load(model_path)
+        # Load scaler first (usually less compatibility issues)
+        if os.path.exists(scaler_path):
             scaler = joblib.load(scaler_path)
-            st.success("✅ Models loaded successfully!")
+            st.success("✅ Scaler loaded successfully!")
         else:
-            st.error(f"❌ Model files not found. Please ensure {model_path} and {scaler_path} exist.")
-            
+            error_message += f"Scaler file '{scaler_path}' not found. "
+        
+        # Load model with compatibility handling
+        if os.path.exists(model_path):
+            try:
+                model = joblib.load(model_path)
+                st.success("✅ Model loaded successfully!")
+            except Exception as model_error:
+                error_message += f"Model loading error: {str(model_error)}"
+                # Try alternative loading method
+                try:
+                    with open(model_path, 'rb') as f:
+                        model = joblib.load(f)
+                    st.success("✅ Model loaded with alternative method!")
+                except:
+                    error_message += " Alternative loading also failed."
+                    
     except Exception as e:
-        st.error(f"❌ Error loading models: {str(e)}")
+        error_message = f"Error loading models: {str(e)}"
+    
+    if error_message:
+        st.error(f"❌ {error_message}")
     
     return model, scaler
 
 # Load models
 model, scaler = load_models()
+
+# Rest of your app code remains the same...
+# [Keep all your existing HTML, input fields, and prediction logic]
 
 # -----------------------------
 # 🎨 Custom CSS for Better Styling
@@ -307,4 +319,5 @@ with footer_col2:
     st.markdown("""
     Built by Junayed Bin Karim  
     """)
+
 
