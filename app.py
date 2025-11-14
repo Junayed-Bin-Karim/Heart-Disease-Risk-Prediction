@@ -55,10 +55,7 @@ def load_models():
             try:
                 model = joblib.load(model_path)
                 st.success(" Model loaded successfully!")
-            except Exception as model_error:
-                st.error(f"❌ Model compatibility error: {str(model_error)}")
-                st.info("💡 **Solution:** The model was created with a different scikit-learn version. Please try: pip install scikit-learn==1.2.2")
-                    
+            
     except Exception as e:
         st.error(f"❌ Error loading models: {str(e)}")
     
@@ -308,5 +305,6 @@ with footer_col2:
     st.markdown("""
     Built by Junayed Bin Karim  
     """)
+
 
 
