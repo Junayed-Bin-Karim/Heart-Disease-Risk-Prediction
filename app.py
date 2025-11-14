@@ -1,10 +1,9 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import os
-import joblib
-import gdown
-
+streamlit
+pandas
+numpy
+scikit-learn
+joblib
+gdown
 
 
 # -----------------------------
@@ -265,4 +264,5 @@ with footer_col2:
     st.markdown("""
     Built by Junayed Bin Karim  
     """)
+
 
