@@ -72,7 +72,7 @@ def load_models():
             try:
                 import joblib
                 scaler = joblib.load(scaler_path)
-                st.success("✅ Scaler loaded successfully!")
+                st.success("Scaler loaded successfully!")
             except Exception as e:
                 st.warning(f"⚠️ Scaler loading issue: {e}")
         
@@ -80,7 +80,7 @@ def load_models():
             try:
                 import joblib
                 model = joblib.load(model_path)
-                st.success("✅ Main model loaded successfully!")
+                st.success(" Main model loaded successfully!")
             except Exception as e:
                 st.warning(f"⚠️ Main model compatibility issue: {e}")
                 st.info("🔄 Switching to fallback model...")
@@ -93,7 +93,7 @@ def load_models():
     
     # If still no model, create fallback
     if model is None:
-        st.info("🎯 Creating fallback model for basic predictions...")
+        st.info(" Creating fallback model for basic predictions...")
         model, fallback_scaler = create_fallback_model()
         if fallback_scaler and scaler is None:
             scaler = fallback_scaler
@@ -152,18 +152,20 @@ st.markdown("""
 st.markdown('<div class="main-header">Heart Disease Risk Assessment</div>', unsafe_allow_html=True)
 
 st.markdown("""
-Assess your cardiovascular health risk based on key health indicators and lifestyle factors.
+আপনার হৃদরোগ ঝুঁকি মূল্যায়ন করুন গুরুত্বপূর্ণ স্বাস্থ্য সূচক এবং জীবনধারার ভিত্তিতে।  
+আমাদের মডেলটি ৭০,০০০ এর বেশি বৈজ্ঞানিক ডেটা ব্যবহার করে প্রশিক্ষিত, তাই ফলাফল আরও নির্ভরযোগ্য।
 """)
+
 
 # Show model status
 if model is not None:
-    st.success("✅ Prediction system ready!")
+    st.success(" Prediction system ready!")
 else:
-    st.error("❌ Prediction system unavailable")
+    st.error(" Prediction system unavailable")
 
 with st.container():
     st.markdown('<div class="info-box">', unsafe_allow_html=True)
-    st.markdown("**📋 Important Note:** This tool provides a *risk assessment* based on health metrics. Always consult healthcare professionals for medical advice.")
+    st.markdown("** Important Note:** This tool provides a *risk assessment* based on health metrics. Always consult healthcare professionals for medical advice.")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # -----------------------------
@@ -174,12 +176,12 @@ st.markdown('<div class="section-header">🩺 Personal & Health Information</div
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.subheader("👤 Personal")
+    st.subheader(" Personal")
     age_years = st.number_input("**Age** (years)", min_value=18, max_value=120, value=45)
     gender = st.selectbox("**Gender**", [1, 2], format_func=lambda x: "Male" if x == 1 else "Female")
     
 with col2:
-    st.subheader("📏 Physical")
+    st.subheader(" Physical")
     height = st.slider("**Height** (cm)", min_value=100, max_value=250, value=170)
     weight = st.slider("**Weight** (kg)", min_value=30, max_value=200, value=70)
     
@@ -190,7 +192,7 @@ with col2:
         st.metric("**BMI**", f"{bmi:.1f}")
 
 with col3:
-    st.subheader("💓 Vital Signs")
+    st.subheader(" Vital Signs")
     ap_hi = st.number_input("**Systolic BP** (mmHg)", min_value=80, max_value=250, value=120)
     ap_lo = st.number_input("**Diastolic BP** (mmHg)", min_value=50, max_value=150, value=80)
     
@@ -199,12 +201,12 @@ with col3:
 
 # Lifestyle & Health Markers
 st.markdown("---")
-st.markdown('<div class="section-header">🏃 Lifestyle & Health Markers</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header"> Lifestyle & Health Markers</div>', unsafe_allow_html=True)
 
 col4, col5, col6 = st.columns(3)
 
 with col4:
-    st.subheader("🧪 Blood Work")
+    st.subheader(" Blood Work")
     cholesterol = st.selectbox("**Cholesterol Level**", [1, 2, 3], 
                               format_func=lambda x: ["Normal", "Above Normal", "Well Above Normal"][x-1])
     gluc = st.selectbox("**Glucose Level**", [1, 2, 3], 
@@ -213,20 +215,20 @@ with col4:
 with col5:
     st.subheader("🚬 Habits")
     smoke = st.radio("**Smoking Status**", [0, 1], 
-                    format_func=lambda x: "🚭 Non-smoker" if x == 0 else "🚬 Smoker")
+                    format_func=lambda x: " Non-smoker" if x == 0 else " Smoker")
     alco = st.radio("**Alcohol Consumption**", [0, 1], 
-                   format_func=lambda x: "🍹 Non-drinker" if x == 0 else "🍷 Drinker")
+                   format_func=lambda x: " Non-drinker" if x == 0 else " Drinker")
 
 with col6:
     st.subheader("🏃 Activity")
     active = st.radio("**Physical Activity**", [1, 0], 
-                     format_func=lambda x: "✅ Active" if x == 1 else "❌ Not Active")
+                     format_func=lambda x: " Active" if x == 1 else " Not Active")
 
 # -----------------------------
 # 🧮 Prediction
 # -----------------------------
 st.markdown("---")
-st.markdown('<div class="section-header">🔍 Risk Assessment</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">Risk Assessment</div>', unsafe_allow_html=True)
 
 if model is None or scaler is None:
     st.markdown('<div class="fallback-warning">', unsafe_allow_html=True)
@@ -239,10 +241,10 @@ if model is None or scaler is None:
     """)
     st.markdown('</div>', unsafe_allow_html=True)
 
-predict_btn = st.button("**🎯 Calculate My Heart Disease Risk**", type="primary", use_container_width=True)
+predict_btn = st.button("** Calculate My Heart Disease Risk**", type="primary", use_container_width=True)
 
 if predict_btn:
-    with st.spinner("🔬 Analyzing your health data..."):
+    with st.spinner(" Analyzing your health data..."):
         # Prepare data
         input_data = {
             'gender': gender,
@@ -268,7 +270,7 @@ if predict_btn:
                 probability = model.predict_proba(X_scaled)[0][1] * 100
                 
                 # Show model source
-                st.info("🤖 **AI Prediction** (Based on trained model)")
+                st.info(" **AI Prediction** (Based on trained model)")
                 
             else:
                 # Fallback: Rule-based assessment
@@ -287,10 +289,10 @@ if predict_btn:
                 probability = min(risk_score, 95)
                 prediction = 1 if probability > 50 else 0
                 
-                st.info("📊 **Rule-Based Assessment** (Based on medical guidelines)")
+                st.info(" **Rule-Based Assessment** (Based on medical guidelines)")
                 
             # Display results
-            st.markdown("## 📊 Assessment Results")
+            st.markdown("##  Assessment Results")
             
             # Progress bar
             st.subheader("Risk Level")
@@ -305,35 +307,35 @@ if predict_btn:
                 st.markdown("""
                 ### 🩺 Recommended Actions:
                 **Consult Healthcare Provider:**
-                - 📞 Schedule a comprehensive check-up
-                - 🩺 Discuss your risk factors
-                - 📊 Regular blood pressure monitoring
+                -  Schedule a comprehensive check-up
+                -  Discuss your risk factors
+                -  Regular blood pressure monitoring
                 
                 **Lifestyle Changes:**
-                - 🥗 Heart-healthy diet
-                - 🚴‍♂️ 30+ minutes daily exercise
-                - 🚭 Avoid tobacco
-                - 🍷 Limit alcohol
+                -  Heart-healthy diet
+                -  30+ minutes daily exercise
+                -  Avoid tobacco
+                -  Limit alcohol
                 """)
                 st.markdown('</div>', unsafe_allow_html=True)
                 
             else:
                 st.markdown('<div class="risk-low">', unsafe_allow_html=True)
-                st.markdown("## ✅ Lower Risk Profile")
+                st.markdown("##  Lower Risk Profile")
                 st.markdown(f"**Risk Probability:** `{probability:.1f}%`")
                 st.markdown("""
-                ### 💡 Maintenance Tips:
+                ###  Maintenance Tips:
                 **Continue Healthy Habits:**
-                - 🏃 Regular physical activity
-                - 🥑 Balanced nutrition
-                - ⚖️ Healthy weight maintenance
-                - 😴 Quality sleep
-                - 🧘 Stress management
+                -  Regular physical activity
+                -  Balanced nutrition
+                -  Healthy weight maintenance
+                -  Quality sleep
+                -  Stress management
                 """)
                 st.markdown('</div>', unsafe_allow_html=True)
 
             # Health metrics summary
-            with st.expander("📈 View Health Metrics Summary"):
+            with st.expander(" View Health Metrics Summary"):
                 col_met1, col_met2, col_met3 = st.columns(3)
                 with col_met1:
                     st.metric("BMI", f"{bmi:.1f}", bmi_category)
@@ -351,7 +353,7 @@ if predict_btn:
                     st.metric("Cholesterol", ["Normal", "Elevated", "High"][cholesterol-1])
                     
         except Exception as e:
-            st.error(f"❌ Error during assessment: {str(e)}")
+            st.error(f"Error during assessment: {str(e)}")
             st.info("Please try again or check your input values.")
 
 # -----------------------------
@@ -363,3 +365,4 @@ st.markdown("""
 
 *Built by Junayed Bin Karim*
 """)
+
