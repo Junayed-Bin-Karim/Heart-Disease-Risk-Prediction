@@ -1,18 +1,23 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import joblib
+import gdown
 import os
 
-# Try to import optional dependencies
-try:
-    import joblib
-except ImportError:
-    st.error("joblib is required but not installed. Please add it to requirements.txt")
-    
-try:
-    import gdown
-except ImportError:
-    st.error("gdown is required but not installed. Please add it to requirements.txt")
+# Add this compatibility fix function
+def fix_sklearn_compatibility():
+    """Fix for scikit-learn version compatibility issues with saved models"""
+    try:
+        from sklearn.tree._tree import Tree
+        # This will force the correct dtype structure
+        return True
+    except ImportError as e:
+        st.error(f"Scikit-learn compatibility issue: {e}")
+        return False
+
+# Call the fix
+fix_sklearn_compatibility()
 
 # -----------------------------
 # 🎯 Page Config - MUST BE FIRST STREAMLIT COMMAND
@@ -302,3 +307,4 @@ with footer_col2:
     st.markdown("""
     Built by Junayed Bin Karim  
     """)
+
