@@ -214,14 +214,14 @@ with col4:
                        format_func=lambda x: ["Normal", "Above Normal", "Well Above Normal"][x-1])
 
 with col5:
-    st.subheader("🚬 Habits")
+    st.subheader("Habits")
     smoke = st.radio("**Smoking Status**", [0, 1], 
                     format_func=lambda x: " Non-smoker" if x == 0 else " Smoker")
     alco = st.radio("**Alcohol Consumption**", [0, 1], 
                    format_func=lambda x: " Non-drinker" if x == 0 else " Drinker")
 
 with col6:
-    st.subheader("🏃 Activity")
+    st.subheader(" Activity")
     active = st.radio("**Physical Activity**", [1, 0], 
                      format_func=lambda x: " Active" if x == 1 else " Not Active")
 
@@ -366,6 +366,7 @@ st.markdown("""
 
 *Built by Junayed Bin Karim*
 """)
+
 
 
 
