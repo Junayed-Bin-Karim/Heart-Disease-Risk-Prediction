@@ -2,10 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
-import pickle
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 import gdown
 import joblib
 from datetime import datetime
@@ -13,184 +11,286 @@ import hashlib
 import json
 
 # -----------------------------
-# 🎯 Page Config
+# Page Config
 # -----------------------------
 st.set_page_config(
     page_title="Heart Disease Risk Assessment", 
     page_icon="❤️", 
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
 # -----------------------------
-# 🎨 Custom CSS
+# Custom CSS for Responsive Design
 # -----------------------------
 st.markdown("""
 <style>
-    /* Main theme colors */
-    :root {
-        --primary: #ff4b4b;
-        --secondary: #0066cc;
-        --success: #00cc00;
-        --warning: #ffc107;
-        --info: #17a2b8;
+    /* Base Styles */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
     
-    /* Header styles */
-    .main-header {
-        font-size: 3rem;
-        font-weight: 700;
-        background: linear-gradient(45deg, #ff4b4b, #ff8c8c);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    /* Main Container */
+    .main-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 15px;
+    }
+    
+    /* Header */
+    .header {
         text-align: center;
-        margin-bottom: 1rem;
+        margin-bottom: 30px;
         padding: 20px;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        border-radius: 15px;
+        color: white;
     }
     
-    /* Card styles */
+    .header h1 {
+        font-size: clamp(24px, 5vw, 42px);
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .header p {
+        font-size: clamp(14px, 3vw, 18px);
+        opacity: 0.9;
+    }
+    
+    /* Cards */
     .card {
         background: white;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
         border: 1px solid #e0e0e0;
+        transition: transform 0.2s;
     }
     
-    /* Risk level indicators */
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Metric Cards */
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .metric-card {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        border-left: 4px solid #2a5298;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .metric-value {
+        font-size: clamp(20px, 4vw, 28px);
+        font-weight: 700;
+        color: #1e3c72;
+        margin: 5px 0;
+    }
+    
+    .metric-label {
+        font-size: clamp(12px, 2.5vw, 14px);
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Risk Indicators */
     .risk-critical {
         background: linear-gradient(135deg, #ffebee, #ffcdd2);
-        padding: 25px;
-        border-radius: 15px;
-        border-left: 8px solid #d32f2f;
-        box-shadow: 0 4px 15px rgba(211, 47, 47, 0.2);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 6px solid #c62828;
+        margin: 15px 0;
     }
     
     .risk-high {
         background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-        padding: 25px;
-        border-radius: 15px;
-        border-left: 8px solid #f57c00;
-        box-shadow: 0 4px 15px rgba(245, 124, 0, 0.2);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 6px solid #ef6c00;
+        margin: 15px 0;
     }
     
     .risk-moderate {
         background: linear-gradient(135deg, #fff8e1, #ffecb3);
-        padding: 25px;
-        border-radius: 15px;
-        border-left: 8px solid #ffc107;
-        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 6px solid #ffa000;
+        margin: 15px 0;
     }
     
     .risk-low {
         background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
-        padding: 25px;
-        border-radius: 15px;
-        border-left: 8px solid #4caf50;
-        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 6px solid #2e7d32;
+        margin: 15px 0;
     }
     
-    /* Info box */
+    /* Info Box */
     .info-box {
-        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 8px solid #1976d2;
-        margin: 20px 0;
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #1565c0;
+        margin: 15px 0;
+        font-size: clamp(13px, 2.5vw, 15px);
     }
     
-    /* Section headers */
+    /* Section Headers */
     .section-header {
-        font-size: 1.8rem;
+        font-size: clamp(18px, 4vw, 24px);
         font-weight: 600;
-        color: #1976d2;
-        margin: 30px 0 20px 0;
-        padding-bottom: 10px;
-        border-bottom: 3px solid #1976d2;
+        color: #1e3c72;
+        margin: 25px 0 15px 0;
+        padding-bottom: 8px;
+        border-bottom: 3px solid #2a5298;
     }
     
-    /* Metric cards */
-    .metric-card {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        text-align: center;
-        transition: transform 0.3s;
+    /* Form Elements */
+    .stNumberInput, .stSelectbox, .stSlider, .stRadio {
+        margin-bottom: 15px;
     }
     
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    }
-    
-    /* Button styles */
-    .stButton > button {
-        background: linear-gradient(45deg, #ff4b4b, #ff6b6b);
+    /* Button */
+    .stButton button {
+        width: 100%;
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
         color: white;
-        font-size: 1.2rem;
-        font-weight: 600;
-        padding: 15px 30px;
-        border-radius: 50px;
+        font-size: clamp(14px, 3vw, 18px);
+        font-weight: 500;
+        padding: 12px 24px;
         border: none;
-        box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
+        border-radius: 8px;
+        cursor: pointer;
         transition: all 0.3s;
+        margin: 10px 0;
     }
     
-    .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(255, 75, 75, 0.4);
+    .stButton button:hover {
+        background: linear-gradient(135deg, #2a5298, #1e3c72);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     
-    /* Tabs styling */
+    /* Tabs */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 20px;
+        gap: 8px;
         background-color: #f5f5f5;
-        padding: 10px;
+        padding: 8px;
         border-radius: 50px;
+        flex-wrap: wrap;
     }
     
     .stTabs [data-baseweb="tab"] {
         border-radius: 50px;
-        padding: 10px 25px;
-        font-weight: 600;
+        padding: 8px 16px;
+        font-size: clamp(12px, 2.5vw, 16px);
+        white-space: nowrap;
     }
     
-    /* Progress bar */
+    /* Progress Bar */
     .stProgress > div > div {
         background: linear-gradient(90deg, #4caf50, #ffc107, #f44336);
-        height: 20px;
-        border-radius: 10px;
+        height: 25px;
+        border-radius: 12px;
     }
     
-    /* Table styling */
+    /* Tables */
     .dataframe {
-        font-size: 1rem;
-        border-collapse: collapse;
         width: 100%;
+        font-size: clamp(12px, 2.5vw, 14px);
+        border-collapse: collapse;
+        margin: 15px 0;
+        overflow-x: auto;
+        display: block;
     }
     
     .dataframe th {
-        background-color: #1976d2;
+        background-color: #1e3c72;
         color: white;
-        padding: 12px;
+        padding: 10px;
         text-align: left;
     }
     
     .dataframe td {
-        padding: 10px;
+        padding: 8px;
         border-bottom: 1px solid #ddd;
     }
     
-    .dataframe tr:hover {
-        background-color: #f5f5f5;
+    /* Footer */
+    .footer {
+        background: #f5f5f5;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 40px;
+        font-size: clamp(12px, 2.5vw, 14px);
+    }
+    
+    .footer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    /* Responsive Columns */
+    .row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+    }
+    
+    /* Mobile Optimizations */
+    @media (max-width: 768px) {
+        .header {
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            padding: 15px;
+        }
+        
+        .metric-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .footer-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .stTabs [data-baseweb="tab-list"] {
+            justify-content: center;
+        }
+    }
+    
+    /* Tablet Optimizations */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .metric-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# 📊 Initialize Session State
+# Initialize Session State
 # -----------------------------
 if 'predictions_history' not in st.session_state:
     st.session_state.predictions_history = []
@@ -200,7 +300,7 @@ if 'user_id' not in st.session_state:
     st.session_state.user_id = hashlib.md5(str(datetime.now()).encode()).hexdigest()[:8]
 
 # -----------------------------
-# 🧠 Model Loading with Caching
+# Model Loading
 # -----------------------------
 @st.cache_resource
 def load_models():
@@ -209,22 +309,18 @@ def load_models():
     scaler_path = "scaler.joblib"
     
     try:
-        # Try to download from Google Drive if not exists
         if not os.path.exists(model_path):
             try:
-                # Replace with your actual Google Drive file ID
                 url = "https://drive.google.com/uc?id=1ikGCWp47yKL-5UbbpY7JH2M79LPeoVLb"
-                gdown.download(url, model_path, quiet=False)
+                gdown.download(url, model_path, quiet=True)
             except Exception as e:
-                st.warning("⚠️ Could not download model. Using fallback model.")
+                st.warning("Model download failed. Using fallback model.")
         
-        # Load models
         if os.path.exists(model_path) and os.path.exists(scaler_path):
             model = joblib.load(model_path)
             scaler = joblib.load(scaler_path)
             return model, scaler, "trained"
         
-        # Create demo model
         X_demo = np.random.randn(1000, 11)
         y_demo = (X_demo[:, 0] + X_demo[:, 1] * 0.5 + np.random.randn(1000) * 0.3 > 0).astype(int)
         
@@ -234,7 +330,6 @@ def load_models():
         model = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
         model.fit(X_scaled, y_demo)
         
-        # Save for future use
         joblib.dump(model, model_path)
         joblib.dump(scaler, scaler_path)
         
@@ -247,194 +342,174 @@ def load_models():
 model, scaler, model_type = load_models()
 
 # -----------------------------
-# 🎯 Header Section with Stats
+# Header Section
 # -----------------------------
-st.markdown('<div class="main-header">❤️ Heart Disease Risk Assessment</div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="header">
+    <h1>Heart Disease Risk Assessment</h1>
+    <p>Advanced Machine Learning Based Health Risk Analysis</p>
+</div>
+""", unsafe_allow_html=True)
 
-# Top metrics row
-col_metric1, col_metric2, col_metric3, col_metric4 = st.columns(4)
-
-with col_metric1:
-    st.markdown("""
+# Metrics Row
+st.markdown(f"""
+<div class="metric-grid">
     <div class="metric-card">
-        <h3>📊 Model Accuracy</h3>
-        <h2>92.5%</h2>
-        <p>Cross-validated score</p>
+        <div class="metric-label">Model Accuracy</div>
+        <div class="metric-value">92.5%</div>
+        <div>Cross-validated</div>
     </div>
-    """, unsafe_allow_html=True)
-
-with col_metric2:
-    st.markdown("""
     <div class="metric-card">
-        <h3>🏥 Data Points</h3>
-        <h2>70,000+</h2>
-        <p>Patient records</p>
+        <div class="metric-label">Data Points</div>
+        <div class="metric-value">70,000+</div>
+        <div>Patient Records</div>
     </div>
-    """, unsafe_allow_html=True)
-
-with col_metric3:
-    st.markdown("""
     <div class="metric-card">
-        <h3>📈 Features</h3>
-        <h2>11</h2>
-        <p>Health indicators</p>
+        <div class="metric-label">Features</div>
+        <div class="metric-value">11</div>
+        <div>Health Indicators</div>
     </div>
-    """, unsafe_allow_html=True)
-
-with col_metric4:
-    st.markdown("""
     <div class="metric-card">
-        <h3>🆔 Session ID</h3>
-        <h2 style="font-size: 1.5rem;">{}</h2>
-        <p>Your unique ID</p>
+        <div class="metric-label">Session ID</div>
+        <div class="metric-value" style="font-size: 16px;">{st.session_state.user_id}</div>
+        <div>Unique Identifier</div>
     </div>
-    """.format(st.session_state.user_id), unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
-# Info box
+# Info Box
 st.markdown("""
 <div class="info-box">
-    <h3>🔬 About This Assessment</h3>
-    <p>This AI-powered tool analyzes your health metrics using machine learning algorithms trained on real clinical data. 
-    The model considers multiple risk factors including age, blood pressure, cholesterol levels, lifestyle choices, and 
-    physical characteristics to provide a comprehensive heart disease risk assessment.</p>
-    <p><strong>Session ID: {}</strong> | Model Type: {} | Created by <b>Junayed Bin Karim</b></p>
+    <strong>About This Assessment:</strong> This tool analyzes health metrics using machine learning algorithms 
+    trained on clinical data. It considers multiple risk factors to provide a comprehensive heart disease risk assessment. 
+    Always consult healthcare professionals for medical advice.
 </div>
-""".format(st.session_state.user_id, "Trained Model" if model_type == "trained" else "Demo Model"), unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # -----------------------------
-# 📝 Main Tabs
+# Main Tabs
 # -----------------------------
-tab1, tab2, tab3, tab4 = st.tabs(["📝 Health Assessment", "📊 Risk Analysis", "📚 Education", "📋 History"])
+tab1, tab2, tab3, tab4 = st.tabs(["Health Assessment", "Risk Analysis", "Education", "History"])
 
 # ===================== TAB 1: Health Assessment =====================
 with tab1:
-    st.markdown('<div class="section-header">🩺 Personal Health Assessment</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Personal Health Information</div>', unsafe_allow_html=True)
     
-    # Create two columns for input
-    col_input1, col_input2 = st.columns(2)
+    # Personal Information
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Demographics")
     
-    with col_input1:
-        st.markdown("#### 👤 Personal Information")
-        
-        age_years = st.number_input("**Age** (years)", min_value=18, max_value=120, value=45, 
-                                   help="Your current age in years")
-        
-        gender = st.radio("**Gender**", [1, 2], 
-                         format_func=lambda x: "Male" if x == 1 else "Female",
-                         help="Biological sex assigned at birth")
-        
-        height = st.slider("**Height** (cm)", min_value=100, max_value=250, value=170,
-                          help="Your height in centimeters")
-        
-        weight = st.slider("**Weight** (kg)", min_value=30, max_value=200, value=70,
-                          help="Your weight in kilograms")
-        
-        # Calculate BMI with color coding
-        if height > 0:
-            bmi = weight / ((height/100) ** 2)
-            if bmi < 18.5:
-                bmi_status = "Underweight"
-                bmi_color = "#ffc107"
-            elif bmi < 25:
-                bmi_status = "Normal"
-                bmi_color = "#4caf50"
-            elif bmi < 30:
-                bmi_status = "Overweight"
-                bmi_color = "#ff9800"
-            else:
-                bmi_status = "Obese"
-                bmi_color = "#f44336"
-            
-            st.markdown(f"""
-            <div style="background: white; padding: 15px; border-radius: 10px; margin-top: 20px;">
-                <h4>📊 BMI Calculator</h4>
-                <h2 style="color: {bmi_color};">{bmi:.1f}</h2>
-                <p>Status: <strong style="color: {bmi_color};">{bmi_status}</strong></p>
-                <p>Healthy BMI range: 18.5 - 24.9</p>
-            </div>
-            """, unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        age_years = st.number_input("Age (years)", min_value=18, max_value=120, value=45)
+    with col2:
+        gender = st.selectbox("Gender", [1, 2], format_func=lambda x: "Male" if x == 1 else "Female")
     
-    with col_input2:
-        st.markdown("#### ❤️ Cardiovascular Health")
-        
-        ap_hi = st.number_input("**Systolic BP** (mmHg)", min_value=80, max_value=250, value=120,
-                                help="Upper number - pressure when heart beats")
-        
-        ap_lo = st.number_input("**Diastolic BP** (mmHg)", min_value=50, max_value=150, value=80,
-                                help="Lower number - pressure when heart rests")
-        
-        # Blood pressure classification
-        if ap_hi < 120 and ap_lo < 80:
-            bp_status = "Normal"
-            bp_color = "#4caf50"
-            bp_desc = "Keep up the healthy habits!"
-        elif ap_hi < 130 and ap_lo < 80:
-            bp_status = "Elevated"
-            bp_color = "#ffc107"
-            bp_desc = "Consider lifestyle changes"
-        elif ap_hi < 140 or ap_lo < 90:
-            bp_status = "High BP Stage 1"
-            bp_color = "#ff9800"
-            bp_desc = "Consult healthcare provider"
-        elif ap_hi < 180 or ap_lo < 120:
-            bp_status = "High BP Stage 2"
-            bp_color = "#f44336"
-            bp_desc = "Medical attention needed"
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Physical Measurements
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Physical Measurements")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        height = st.slider("Height (cm)", min_value=100, max_value=250, value=170)
+    with col2:
+        weight = st.slider("Weight (kg)", min_value=30, max_value=200, value=70)
+    
+    if height > 0:
+        bmi = weight / ((height/100) ** 2)
+        if bmi < 18.5:
+            bmi_status = "Underweight"
+            bmi_color = "#ffc107"
+        elif bmi < 25:
+            bmi_status = "Normal"
+            bmi_color = "#4caf50"
+        elif bmi < 30:
+            bmi_status = "Overweight"
+            bmi_color = "#ff9800"
         else:
-            bp_status = "Hypertensive Crisis"
-            bp_color = "#d32f2f"
-            bp_desc = "Emergency care needed!"
+            bmi_status = "Obese"
+            bmi_color = "#f44336"
         
         st.markdown(f"""
-        <div style="background: white; padding: 15px; border-radius: 10px; margin-top: 20px;">
-            <h4>💓 Blood Pressure Analysis</h4>
-            <h2 style="color: {bp_color};">{ap_hi}/{ap_lo}</h2>
-            <p>Status: <strong style="color: {bp_color};">{bp_status}</strong></p>
-            <p>{bp_desc}</p>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <strong>Body Mass Index (BMI):</strong> {bmi:.1f}<br>
+            <strong>Status:</strong> <span style="color: {bmi_color};">{bmi_status}</span><br>
+            <small>Healthy Range: 18.5 - 24.9</small>
         </div>
         """, unsafe_allow_html=True)
-        
-        cholesterol = st.selectbox("**Cholesterol Level**", [1, 2, 3], 
-                                  format_func=lambda x: ["Normal (<200 mg/dL)", 
-                                                        "Above Normal (200-239 mg/dL)", 
-                                                        "High (≥240 mg/dL)"][x-1],
-                                  help="Total cholesterol level")
-        
-        gluc = st.selectbox("**Glucose Level**", [1, 2, 3],
-                           format_func=lambda x: ["Normal (<100 mg/dL)", 
-                                                 "Above Normal (100-125 mg/dL)", 
-                                                 "High (≥126 mg/dL)"][x-1],
-                           help="Fasting blood glucose level")
     
-    # Lifestyle factors in columns
-    st.markdown("#### 🏃‍♂️ Lifestyle Factors")
-    col_life1, col_life2, col_life3 = st.columns(3)
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    with col_life1:
-        smoke = st.radio("**Smoking Status**", [0, 1], 
-                        format_func=lambda x: "🚫 Non-smoker" if x == 0 else "🚬 Smoker",
-                        help="Current smoking status")
+    # Vital Signs
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Vital Signs")
     
-    with col_life2:
-        alco = st.radio("**Alcohol Consumption**", [0, 1],
-                       format_func=lambda x: "🚫 Non-drinker" if x == 0 else "🍷 Drinker",
-                       help="Regular alcohol consumption")
+    col1, col2 = st.columns(2)
+    with col1:
+        ap_hi = st.number_input("Systolic BP (mmHg)", min_value=80, max_value=250, value=120)
+    with col2:
+        ap_lo = st.number_input("Diastolic BP (mmHg)", min_value=50, max_value=150, value=80)
     
-    with col_life3:
-        active = st.radio("**Physical Activity**", [1, 0],
-                         format_func=lambda x: "🏃 Active" if x == 1 else "😴 Not Active",
-                         help="Regular physical activity (at least 30 min/day)")
+    if ap_hi < 120 and ap_lo < 80:
+        bp_status = "Normal"
+        bp_color = "#4caf50"
+    elif ap_hi < 130 and ap_lo < 80:
+        bp_status = "Elevated"
+        bp_color = "#ffc107"
+    elif ap_hi < 140 or ap_lo < 90:
+        bp_status = "High BP Stage 1"
+        bp_color = "#ff9800"
+    elif ap_hi < 180 or ap_lo < 120:
+        bp_status = "High BP Stage 2"
+        bp_color = "#f44336"
+    else:
+        bp_status = "Hypertensive Crisis"
+        bp_color = "#d32f2f"
     
-    # Assessment button
-    st.markdown("---")
-    col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+    st.markdown(f"""
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+        <strong>Blood Pressure Classification:</strong><br>
+        <span style="color: {bp_color};">{bp_status}</span>
+    </div>
+    """, unsafe_allow_html=True)
     
-    with col_btn2:
-        predict_btn = st.button("🔍 Analyze My Heart Health", type="primary", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Laboratory Values
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Laboratory Values")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        cholesterol = st.selectbox("Cholesterol Level", [1, 2, 3], 
+                                 format_func=lambda x: ["Normal", "Above Normal", "High"][x-1])
+    with col2:
+        gluc = st.selectbox("Glucose Level", [1, 2, 3],
+                          format_func=lambda x: ["Normal", "Above Normal", "High"][x-1])
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Lifestyle Factors
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Lifestyle Factors")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        smoke = st.radio("Smoking", [0, 1], format_func=lambda x: "No" if x == 0 else "Yes")
+    with col2:
+        alco = st.radio("Alcohol", [0, 1], format_func=lambda x: "No" if x == 0 else "Yes")
+    with col3:
+        active = st.radio("Physical Activity", [1, 0], format_func=lambda x: "Yes" if x == 1 else "No")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Assessment Button
+    predict_btn = st.button("Calculate Risk Assessment", type="primary")
     
     if predict_btn:
-        with st.spinner("🔄 Analyzing your health data..."):
-            # Prepare input data
+        with st.spinner("Analyzing your health data..."):
             input_data = {
                 'gender': gender,
                 'weight': weight,
@@ -454,151 +529,97 @@ with tab1:
             
             try:
                 if model is not None and scaler is not None:
-                    # Make prediction
                     features = ['gender', 'weight', 'ap_hi', 'ap_lo', 'cholesterol', 
                                'gluc', 'smoke', 'alco', 'active', 'age_years', 'height_m']
                     X = df[features]
                     X_scaled = scaler.transform(X)
                     
-                    prediction = model.predict(X_scaled)[0]
                     probability = model.predict_proba(X_scaled)[0][1] * 100
                     
-                    # Store in session state
                     st.session_state.current_prediction = {
                         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         'probability': probability,
-                        'prediction': prediction,
-                        'input_data': input_data,
-                        'model_type': model_type
+                        'input_data': input_data
                     }
                     
                     st.session_state.predictions_history.append(st.session_state.current_prediction)
                     
-                    # Display results
-                    st.markdown("## 📊 Assessment Results")
+                    # Results
+                    st.markdown('<div class="section-header">Assessment Results</div>', unsafe_allow_html=True)
                     
-                    # Determine risk level
                     if probability >= 70:
-                        risk_level = "Critical"
                         risk_class = "risk-critical"
-                        risk_message = "⚠️ Immediate attention recommended"
+                        risk_message = "Critical Risk - Immediate Attention Required"
                     elif probability >= 50:
-                        risk_level = "High"
                         risk_class = "risk-high"
-                        risk_message = "⚡ High risk detected"
+                        risk_message = "High Risk - Medical Consultation Recommended"
                     elif probability >= 30:
-                        risk_level = "Moderate"
                         risk_class = "risk-moderate"
-                        risk_message = "⚖️ Moderate risk - Take action"
+                        risk_message = "Moderate Risk - Lifestyle Changes Recommended"
                     else:
-                        risk_level = "Low"
                         risk_class = "risk-low"
-                        risk_message = "✅ Low risk - Maintain healthy habits"
+                        risk_message = "Low Risk - Maintain Healthy Habits"
                     
-                    # Progress bar for risk
                     st.progress(probability/100)
                     st.caption(f"Risk Probability: {probability:.1f}%")
                     
-                    col_res1, col_res2 = st.columns(2)
-                    
-                    with col_res1:
-                        st.markdown(f"""
-                        <div class="{risk_class}">
-                            <h3>{risk_message}</h3>
-                            <p>Risk Level: <strong>{risk_level}</strong></p>
-                            <p>Model Confidence: {probability:.1f}%</p>
-                            <p>Analysis Time: {datetime.now().strftime("%H:%M:%S")}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col_res2:
-                        st.markdown("#### 🔍 Risk Factor Analysis")
-                        
-                        risk_factors = []
-                        if age_years > 45:
-                            risk_factors.append(("Age > 45", "➕", str(age_years)))
-                        if bmi >= 25:
-                            risk_factors.append(("Overweight/Obese", "➕", f"{bmi:.1f}"))
-                        if ap_hi >= 140:
-                            risk_factors.append(("High Systolic BP", "➕", str(ap_hi)))
-                        if cholesterol > 1:
-                            risk_factors.append(("High Cholesterol", "➕", ["Normal", "Elevated", "High"][cholesterol-1]))
-                        if smoke == 1:
-                            risk_factors.append(("Smoking", "➕", "Yes"))
-                        if active == 0:
-                            risk_factors.append(("Inactive Lifestyle", "➕", "Yes"))
-                        
-                        if risk_factors:
-                            for factor, symbol, value in risk_factors:
-                                st.markdown(f"- {symbol} **{factor}**: {value}")
-                        else:
-                            st.markdown("- ✅ No major risk factors detected")
-                        
-                        # Recommendations
-                        st.markdown("#### 💡 Personalized Recommendations")
-                        
-                        if probability >= 50:
-                            st.markdown("""
-                            - **Consult a doctor** within the next week
-                            - **Monitor blood pressure** daily
-                            - **Start with light exercise** (walking 15-20 min/day)
-                            - **Reduce sodium intake** to <1500mg/day
-                            - **Quit smoking** if applicable
-                            """)
-                        elif probability >= 30:
-                            st.markdown("""
-                            - **Schedule a check-up** in the next month
-                            - **Increase physical activity** to 30 min/day
-                            - **Maintain healthy diet** rich in fruits/vegetables
-                            - **Monitor cholesterol** levels
-                            """)
-                        else:
-                            st.markdown("""
-                            - **Continue healthy habits**
-                            - **Regular exercise** (30-45 min/day)
-                            - **Balanced nutrition**
-                            - **Annual check-ups**
-                            """)
+                    st.markdown(f"""
+                    <div class="{risk_class}">
+                        <h3>{risk_message}</h3>
+                        <p>Analysis completed at: {datetime.now().strftime("%H:%M:%S")}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
                     
             except Exception as e:
-                st.error(f"Analysis error: {e}")
+                st.error(f"Analysis error: {str(e)}")
 
 # ===================== TAB 2: Risk Analysis =====================
 with tab2:
-    st.markdown('<div class="section-header">📊 Risk Factor Analysis</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Risk Factor Analysis</div>', unsafe_allow_html=True)
     
     if st.session_state.current_prediction:
         input_data = st.session_state.current_prediction['input_data']
         probability = st.session_state.current_prediction['probability']
         
-        # Create a simple risk factor table
-        st.markdown("### 📋 Risk Factor Breakdown")
+        # Risk Factors Table
+        risk_factors = []
+        if input_data['age_years'] > 45:
+            risk_factors.append({"Factor": "Age", "Value": str(input_data['age_years']) + " years", "Risk": "High"})
+        else:
+            risk_factors.append({"Factor": "Age", "Value": str(input_data['age_years']) + " years", "Risk": "Low"})
+            
+        if input_data['bmi'] >= 25:
+            risk_factors.append({"Factor": "BMI", "Value": f"{input_data['bmi']:.1f}", "Risk": "High"})
+        else:
+            risk_factors.append({"Factor": "BMI", "Value": f"{input_data['bmi']:.1f}", "Risk": "Low"})
+            
+        if input_data['ap_hi'] >= 140:
+            risk_factors.append({"Factor": "Blood Pressure", "Value": f"{input_data['ap_hi']}/{input_data['ap_lo']}", "Risk": "High"})
+        else:
+            risk_factors.append({"Factor": "Blood Pressure", "Value": f"{input_data['ap_hi']}/{input_data['ap_lo']}", "Risk": "Low"})
+            
+        if input_data['cholesterol'] > 1:
+            risk_factors.append({"Factor": "Cholesterol", "Value": ["Normal", "Elevated", "High"][input_data['cholesterol']-1], "Risk": "High"})
+        else:
+            risk_factors.append({"Factor": "Cholesterol", "Value": "Normal", "Risk": "Low"})
+            
+        if input_data['gluc'] > 1:
+            risk_factors.append({"Factor": "Glucose", "Value": ["Normal", "Elevated", "High"][input_data['gluc']-1], "Risk": "High"})
+        else:
+            risk_factors.append({"Factor": "Glucose", "Value": "Normal", "Risk": "Low"})
+            
+        if input_data['smoke'] == 1:
+            risk_factors.append({"Factor": "Smoking", "Value": "Yes", "Risk": "High"})
+        else:
+            risk_factors.append({"Factor": "Smoking", "Value": "No", "Risk": "Low"})
+            
+        if input_data['active'] == 0:
+            risk_factors.append({"Factor": "Physical Activity", "Value": "Inactive", "Risk": "High"})
+        else:
+            risk_factors.append({"Factor": "Physical Activity", "Value": "Active", "Risk": "Low"})
         
-        risk_data = {
-            'Risk Factor': ['Age', 'BMI', 'Blood Pressure', 'Cholesterol', 'Glucose', 'Smoking', 'Physical Activity'],
-            'Your Value': [
-                f"{input_data['age_years']} years",
-                f"{input_data['bmi']:.1f}",
-                f"{input_data['ap_hi']}/{input_data['ap_lo']}",
-                ["Normal", "Elevated", "High"][input_data['cholesterol']-1],
-                ["Normal", "Elevated", "High"][input_data['gluc']-1],
-                "Yes" if input_data['smoke'] == 1 else "No",
-                "Active" if input_data['active'] == 1 else "Inactive"
-            ],
-            'Risk Level': [
-                "High" if input_data['age_years'] > 45 else "Low",
-                "High" if input_data['bmi'] >= 25 else "Low",
-                "High" if input_data['ap_hi'] >= 140 else "Low",
-                "High" if input_data['cholesterol'] > 1 else "Low",
-                "High" if input_data['gluc'] > 1 else "Low",
-                "High" if input_data['smoke'] == 1 else "Low",
-                "High" if input_data['active'] == 0 else "Low"
-            ]
-        }
+        df_risk = pd.DataFrame(risk_factors)
         
-        risk_df = pd.DataFrame(risk_data)
-        
-        # Color code the risk levels
         def color_risk(val):
             if val == "High":
                 return 'background-color: #ffcccc'
@@ -606,282 +627,258 @@ with tab2:
                 return 'background-color: #ccffcc'
             return ''
         
-        styled_df = risk_df.style.applymap(color_risk, subset=['Risk Level'])
+        styled_df = df_risk.style.applymap(color_risk, subset=['Risk'])
         st.dataframe(styled_df, use_container_width=True)
         
-        # Risk factors count
-        high_risk_count = sum(1 for r in risk_data['Risk Level'] if r == "High")
+        # Summary Statistics
+        col1, col2, col3 = st.columns(3)
+        high_risk_count = sum(1 for r in risk_factors if r["Risk"] == "High")
         
-        col_stat1, col_stat2, col_stat3 = st.columns(3)
-        with col_stat1:
+        with col1:
             st.metric("High Risk Factors", high_risk_count)
-        with col_stat2:
+        with col2:
             st.metric("Overall Risk", f"{probability:.1f}%")
-        with col_stat3:
+        with col3:
             risk_category = "High" if probability >= 50 else "Moderate" if probability >= 30 else "Low"
             st.metric("Risk Category", risk_category)
         
-        # Recommendations based on specific risk factors
-        st.markdown("### 🎯 Targeted Recommendations")
+        # Recommendations
+        st.markdown("### Clinical Recommendations")
         
         if input_data['bmi'] >= 25:
-            with st.expander("🏋️ Weight Management"):
-                st.markdown("""
-                - Aim to lose 5-10% of body weight
-                - Set a goal BMI of <25
-                - Try intermittent fasting or portion control
-                - Consider consulting a nutritionist
+            with st.expander("Weight Management"):
+                st.write("""
+                - Target weight loss of 5-10% of body weight
+                - Maintain BMI below 25
+                - Consider consultation with nutritionist
+                - Implement portion control strategies
                 """)
         
         if input_data['ap_hi'] >= 140:
-            with st.expander("💓 Blood Pressure Control"):
-                st.markdown("""
-                - Reduce sodium intake to <1500mg/day
-                - Try the DASH diet
+            with st.expander("Blood Pressure Control"):
+                st.write("""
+                - Reduce sodium intake below 1500mg daily
+                - Follow DASH diet principles
                 - Limit alcohol consumption
                 - Practice stress reduction techniques
-                - Monitor BP daily
+                - Monitor blood pressure regularly
                 """)
         
         if input_data['cholesterol'] > 1:
-            with st.expander("🥗 Cholesterol Management"):
-                st.markdown("""
+            with st.expander("Cholesterol Management"):
+                st.write("""
                 - Increase soluble fiber intake
-                - Choose healthy fats (olive oil, nuts, avocados)
+                - Choose unsaturated fats
                 - Limit saturated and trans fats
-                - Eat more omega-3 fatty acids (fish, flaxseed)
+                - Consume omega-3 fatty acids
+                - Regular cardiovascular exercise
                 """)
         
         if input_data['smoke'] == 1:
-            with st.expander("🚭 Smoking Cessation"):
-                st.markdown("""
+            with st.expander("Smoking Cessation"):
+                st.write("""
                 - Consider nicotine replacement therapy
-                - Join a support group
-                - Try the "cold turkey" approach
-                - Use smoking cessation apps
-                - Benefits begin within 20 minutes of quitting!
+                - Join smoking cessation programs
+                - Identify and avoid triggers
+                - Seek support from healthcare providers
+                - Benefits begin within 20 minutes of quitting
                 """)
         
         if input_data['active'] == 0:
-            with st.expander("🏃 Physical Activity"):
-                st.markdown("""
-                - Start with 10-15 minute walks daily
+            with st.expander("Physical Activity"):
+                st.write("""
+                - Begin with 10-15 minute daily walks
                 - Gradually increase to 30 minutes
-                - Try different activities (swimming, cycling, yoga)
-                - Use a fitness tracker for motivation
-                - Find an exercise buddy
+                - Incorporate variety in activities
+                - Use activity trackers for motivation
+                - Find exercise partners for accountability
                 """)
-                
     else:
-        st.info("👆 Complete an assessment in the 'Health Assessment' tab to see risk analysis!")
+        st.info("Complete an assessment in the Health Assessment tab to view risk analysis.")
 
 # ===================== TAB 3: Education =====================
 with tab3:
-    st.markdown('<div class="section-header">📚 Heart Health Education</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Heart Health Education</div>', unsafe_allow_html=True)
     
-    col_edu1, col_edu2 = st.columns(2)
+    col1, col2 = st.columns(2)
     
-    with col_edu1:
+    with col1:
         st.markdown("""
-        ### ❤️ Understanding Heart Disease
+        ### Understanding Heart Disease
         
-        Heart disease refers to several types of heart conditions. The most common type is coronary artery disease, 
-        which affects the blood flow to the heart.
+        Heart disease encompasses various conditions affecting heart function. Coronary artery disease, the most common type, results from plaque buildup in arterial walls.
         
-        **Key Facts:**
-        - Leading cause of death worldwide
-        - Often preventable through lifestyle changes
-        - Early detection is crucial
-        - Affects all age groups
+        **Primary Risk Factors:**
         
-        ### 🩺 Risk Factors
-        **Non-modifiable:**
-        - Age (risk increases with age)
-        - Gender (men have higher risk)
+        *Non-modifiable:*
+        - Increasing age
+        - Male gender
         - Family history
-        - Race
+        - Genetic predisposition
         
-        **Modifiable:**
-        - Smoking
-        - High blood pressure
-        - High cholesterol
-        - Diabetes
+        *Modifiable:*
+        - Tobacco use
+        - Hypertension
+        - Hypercholesterolemia
+        - Diabetes mellitus
         - Obesity
-        - Physical inactivity
-        - Unhealthy diet
+        - Sedentary lifestyle
+        - Unhealthy dietary patterns
         """)
     
-    with col_edu2:
+    with col2:
         st.markdown("""
-        ### 🏃 Prevention Tips
+        ### Prevention Strategies
         
-        **1. Healthy Diet:**
-        - Eat plenty of fruits and vegetables
-        - Choose whole grains
-        - Limit saturated fats
-        - Reduce sodium intake
-        - Limit added sugars
+        **Dietary Modifications:**
+        - Increased fruit and vegetable consumption
+        - Whole grain incorporation
+        - Limited saturated fat intake
+        - Reduced sodium consumption
+        - Minimized added sugars
         
-        **2. Regular Exercise:**
+        **Physical Activity:**
         - 150 minutes moderate activity weekly
-        - Include strength training
-        - Stay active throughout day
+        - Resistance training twice weekly
+        - Regular movement throughout day
         
-        **3. Healthy Weight:**
-        - Maintain BMI between 18.5-24.9
-        - Focus on waist circumference
-        - Gradual, sustainable changes
-        
-        **4. No Smoking:**
-        - Quit smoking immediately
-        - Avoid secondhand smoke
-        - Seek support programs
-        
-        **5. Limit Alcohol:**
-        - Moderation is key
-        - 1 drink/day for women
-        - 2 drinks/day for men
+        **Weight Management:**
+        - BMI maintenance 18.5-24.9
+        - Waist circumference monitoring
+        - Gradual sustainable changes
         """)
     
-    # Educational tables
-    st.markdown("### 📊 Health Indicators Reference")
+    # Reference Tables
+    st.markdown("### Clinical Reference Guidelines")
     
-    col_table1, col_table2 = st.columns(2)
+    col1, col2 = st.columns(2)
     
-    with col_table1:
-        st.markdown("#### BMI Categories")
+    with col1:
+        st.markdown("**BMI Classification**")
         bmi_table = pd.DataFrame({
             'Category': ['Underweight', 'Normal', 'Overweight', 'Obese'],
-            'BMI Range': ['< 18.5', '18.5 - 24.9', '25 - 29.9', '≥ 30'],
-            'Risk Level': ['Low', 'Low', 'Moderate', 'High']
+            'Range': ['< 18.5', '18.5 - 24.9', '25 - 29.9', '≥ 30'],
+            'Risk': ['Low', 'Low', 'Moderate', 'High']
         })
         st.dataframe(bmi_table, use_container_width=True)
     
-    with col_table2:
-        st.markdown("#### Blood Pressure Categories")
+    with col2:
+        st.markdown("**Blood Pressure Categories**")
         bp_table = pd.DataFrame({
-            'Category': ['Normal', 'Elevated', 'Stage 1 HTN', 'Stage 2 HTN', 'Crisis'],
+            'Category': ['Normal', 'Elevated', 'Stage 1', 'Stage 2', 'Crisis'],
             'Systolic': ['<120', '120-129', '130-139', '140-180', '>180'],
-            'Diastolic': ['<80', '<80', '80-89', '90-120', '>120'],
-            'Action': ['Maintain', 'Lifestyle', 'Consult MD', 'Medical Help', 'Emergency!']
+            'Diastolic': ['<80', '<80', '80-89', '90-120', '>120']
         })
         st.dataframe(bp_table, use_container_width=True)
     
-    # Interactive quiz
-    st.markdown("### 📝 Quick Knowledge Check")
-    with st.expander("Test Your Heart Health Knowledge"):
-        q1 = st.radio("1. What is a healthy BMI range?", 
-                     ["< 18.5", "18.5 - 24.9", "25 - 29.9", "> 30"])
-        if q1 == "18.5 - 24.9":
-            st.success("✅ Correct!")
+    # Knowledge Check
+    with st.expander("Knowledge Assessment"):
+        st.markdown("Test your understanding of heart health:")
+        
+        q1 = st.radio("1. What is the recommended weekly physical activity duration?", 
+                     ["75 minutes", "150 minutes", "225 minutes", "300 minutes"])
+        if q1 == "150 minutes":
+            st.success("Correct answer.")
         elif q1:
-            st.error("❌ Try again. Healthy BMI is 18.5-24.9")
+            st.error("Incorrect. The recommendation is 150 minutes of moderate activity weekly.")
         
-        q2 = st.radio("2. How much exercise is recommended weekly?",
-                     ["30 minutes", "75 minutes", "150 minutes", "300 minutes"])
-        if q2 == "150 minutes":
-            st.success("✅ Correct!")
-        elif q2:
-            st.error("❌ 150 minutes of moderate activity is recommended")
-        
-        q3 = st.radio("3. What is considered normal blood pressure?",
+        q2 = st.radio("2. Which blood pressure reading is considered normal?",
                      ["< 120/80", "< 130/80", "< 140/90", "< 150/90"])
-        if q3 == "< 120/80":
-            st.success("✅ Correct!")
+        if q2 == "< 120/80":
+            st.success("Correct answer.")
+        elif q2:
+            st.error("Incorrect. Normal blood pressure is below 120/80 mmHg.")
+        
+        q3 = st.radio("3. What BMI range indicates healthy weight?",
+                     ["< 18.5", "18.5 - 24.9", "25 - 29.9", "> 30"])
+        if q3 == "18.5 - 24.9":
+            st.success("Correct answer.")
         elif q3:
-            st.error("❌ Normal BP is < 120/80 mmHg")
+            st.error("Incorrect. Healthy BMI ranges from 18.5 to 24.9.")
 
 # ===================== TAB 4: History =====================
 with tab4:
-    st.markdown('<div class="section-header">📋 Assessment History</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Assessment History</div>', unsafe_allow_html=True)
     
     if st.session_state.predictions_history:
-        # Convert history to DataFrame
         history_df = pd.DataFrame(st.session_state.predictions_history)
         
-        # Summary statistics
-        col_stat1, col_stat2, col_stat3 = st.columns(3)
-        
-        with col_stat1:
+        col1, col2, col3 = st.columns(3)
+        with col1:
             avg_risk = history_df['probability'].mean()
             st.metric("Average Risk", f"{avg_risk:.1f}%")
         
-        with col_stat2:
+        with col2:
             latest_risk = history_df['probability'].iloc[-1]
-            prev_risk = history_df['probability'].iloc[-2] if len(history_df) > 1 else latest_risk
-            delta = latest_risk - prev_risk
-            st.metric("Latest Risk", f"{latest_risk:.1f}%", 
-                     f"{delta:+.1f}%" if len(history_df) > 1 else None)
+            if len(history_df) > 1:
+                prev_risk = history_df['probability'].iloc[-2]
+                delta = latest_risk - prev_risk
+                st.metric("Latest Risk", f"{latest_risk:.1f}%", f"{delta:+.1f}%")
+            else:
+                st.metric("Latest Risk", f"{latest_risk:.1f}%")
         
-        with col_stat3:
-            total_assessments = len(history_df)
-            st.metric("Total Assessments", total_assessments)
+        with col3:
+            st.metric("Total Assessments", len(history_df))
         
-        # Display history table
-        st.markdown("#### 📜 Assessment Records")
-        
+        st.markdown("### Assessment Records")
         display_df = history_df[['timestamp', 'probability']].copy()
         display_df['probability'] = display_df['probability'].round(1).astype(str) + '%'
-        display_df.columns = ['Date & Time', 'Risk Probability']
-        
+        display_df.columns = ['Date and Time', 'Risk Probability']
         st.dataframe(display_df, use_container_width=True)
         
-        # Export option
-        if st.button("📥 Download History as CSV"):
-            csv = history_df.to_csv(index=False)
-            st.download_button(
-                label="Download CSV",
-                data=csv,
-                file_name=f"heart_health_history_{st.session_state.user_id}.csv",
-                mime="text/csv"
-            )
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Export History"):
+                csv = history_df.to_csv(index=False)
+                st.download_button(
+                    label="Download CSV",
+                    data=csv,
+                    file_name=f"heart_assessment_history_{st.session_state.user_id}.csv",
+                    mime="text/csv"
+                )
         
-        # Clear history button
-        if st.button("🗑️ Clear History"):
-            st.session_state.predictions_history = []
-            st.rerun()
-            
+        with col2:
+            if st.button("Clear History"):
+                st.session_state.predictions_history = []
+                st.rerun()
     else:
-        st.info("No assessment history yet. Complete an assessment in the 'Health Assessment' tab!")
+        st.info("No assessment history available. Complete an assessment in the Health Assessment tab.")
 
 # -----------------------------
-# 📝 Footer
+# Footer
 # -----------------------------
-st.markdown("---")
+st.markdown("""
+<div class="footer">
+    <div class="footer-grid">
+        <div>
+            <strong>Resources</strong><br>
+            American Heart Association<br>
+            World Health Organization<br>
+            Centers for Disease Control
+        </div>
+        <div>
+            <strong>Emergency Contacts</strong><br>
+            Emergency: 911<br>
+            Heart Helpline: 1-800-242-8721<br>
+            Poison Control: 1-800-222-1222
+        </div>
+        <div>
+            <strong>Disclaimer</strong><br>
+            This tool provides educational information only. Not a substitute for professional medical advice, diagnosis, or treatment.
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+        Developed by Junayed Bin Karim | Machine Learning Bootcamp Final Project
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-col_foot1, col_foot2, col_foot3 = st.columns(3)
-
-with col_foot1:
-    st.markdown("""
-    **🔗 Quick Links**
-    - [American Heart Association](https://www.heart.org)
-    - [WHO Cardiovascular Diseases](https://www.who.int/health-topics/cardiovascular-diseases)
-    - [CDC Heart Disease](https://www.cdc.gov/heartdisease)
-    """)
-
-with col_foot2:
-    st.markdown("""
-    **📞 Emergency Contacts**
-    - Emergency: 911
-    - Heart Helpline: 1-800-242-8721
-    - Poison Control: 1-800-222-1222
-    """)
-
-with col_foot3:
-    st.markdown("""
-    **⚖️ Disclaimer**
-    This tool is for educational purposes only. 
-    Always consult healthcare professionals for medical advice.
-    
-    *Built by Junayed Bin Karim | Final Project - Machine Learning Bootcamp*
-    """)
-
-# Session state management
-st.markdown("---")
-with st.expander("🔧 Developer Info"):
+# Developer Information
+with st.expander("System Information"):
     st.json({
         "session_id": st.session_state.user_id,
         "model_type": model_type,
-        "total_predictions": len(st.session_state.predictions_history),
-        "session_start": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "total_assessments": len(st.session_state.predictions_history),
+        "session_start": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "application_version": "2.0.0"
     })
