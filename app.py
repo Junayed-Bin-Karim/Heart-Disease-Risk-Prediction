@@ -1,16 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
-import gdown
 import joblib
 from datetime import datetime
-import hashlib
-import warnings
-import logging
-
 # -----------------------------
 // সব warning এবং error হাইড করুন
 warnings.filterwarnings('ignore')
@@ -556,3 +550,4 @@ with st.expander("ℹ️ সিস্টেম তথ্য"):
         "total_assessments": len(st.session_state.predictions_history),
         "session_id": st.session_state.user_id
     })
+
