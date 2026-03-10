@@ -3,11 +3,6 @@ import pandas as pd
 import numpy as np
 import os
 import pickle
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -22,6 +17,7 @@ import json
 # -----------------------------
 st.set_page_config(
     page_title="Heart Disease Risk Assessment", 
+    page_icon="❤️", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -161,18 +157,34 @@ st.markdown("""
         font-weight: 600;
     }
     
-    /* Tooltips */
-    .tooltip {
-        position: relative;
-        display: inline-block;
-        border-bottom: 1px dotted #666;
-    }
-    
     /* Progress bar */
     .stProgress > div > div {
         background: linear-gradient(90deg, #4caf50, #ffc107, #f44336);
         height: 20px;
         border-radius: 10px;
+    }
+    
+    /* Table styling */
+    .dataframe {
+        font-size: 1rem;
+        border-collapse: collapse;
+        width: 100%;
+    }
+    
+    .dataframe th {
+        background-color: #1976d2;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+    
+    .dataframe td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .dataframe tr:hover {
+        background-color: #f5f5f5;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -200,7 +212,8 @@ def load_models():
         # Try to download from Google Drive if not exists
         if not os.path.exists(model_path):
             try:
-                url = "https://drive.google.com/uc?id=YOUR_FILE_ID"  # Replace with your file ID
+                # Replace with your actual Google Drive file ID
+                url = "https://drive.google.com/uc?id=1ikGCWp47yKL-5UbbpY7JH2M79LPeoVLb"
                 gdown.download(url, model_path, quiet=False)
             except Exception as e:
                 st.warning("⚠️ Could not download model. Using fallback model.")
@@ -236,7 +249,7 @@ model, scaler, model_type = load_models()
 # -----------------------------
 # 🎯 Header Section with Stats
 # -----------------------------
-st.markdown('<div class="main-header"> Heart Health Intelligence</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header">❤️ Heart Disease Risk Assessment</div>', unsafe_allow_html=True)
 
 # Top metrics row
 col_metric1, col_metric2, col_metric3, col_metric4 = st.columns(4)
@@ -284,14 +297,14 @@ st.markdown("""
     <p>This AI-powered tool analyzes your health metrics using machine learning algorithms trained on real clinical data. 
     The model considers multiple risk factors including age, blood pressure, cholesterol levels, lifestyle choices, and 
     physical characteristics to provide a comprehensive heart disease risk assessment.</p>
-    <p><strong>Session ID: {}</strong> | Model Type: {} | Created by Junayed Bin Karim</p>
+    <p><strong>Session ID: {}</strong> | Model Type: {} | Created by <b>Junayed Bin Karim</b></p>
 </div>
 """.format(st.session_state.user_id, "Trained Model" if model_type == "trained" else "Demo Model"), unsafe_allow_html=True)
 
 # -----------------------------
 # 📝 Main Tabs
 # -----------------------------
-tab1, tab2, tab3, tab4 = st.tabs(["📝 Health Assessment", "📊 Analysis & Charts", "📚 Education", "📋 History"])
+tab1, tab2, tab3, tab4 = st.tabs(["📝 Health Assessment", "📊 Risk Analysis", "📚 Education", "📋 History"])
 
 # ===================== TAB 1: Health Assessment =====================
 with tab1:
@@ -334,7 +347,7 @@ with tab1:
             
             st.markdown(f"""
             <div style="background: white; padding: 15px; border-radius: 10px; margin-top: 20px;">
-                <h4>BMI Calculator</h4>
+                <h4>📊 BMI Calculator</h4>
                 <h2 style="color: {bmi_color};">{bmi:.1f}</h2>
                 <p>Status: <strong style="color: {bmi_color};">{bmi_status}</strong></p>
                 <p>Healthy BMI range: 18.5 - 24.9</p>
@@ -374,7 +387,7 @@ with tab1:
         
         st.markdown(f"""
         <div style="background: white; padding: 15px; border-radius: 10px; margin-top: 20px;">
-            <h4>Blood Pressure Analysis</h4>
+            <h4>💓 Blood Pressure Analysis</h4>
             <h2 style="color: {bp_color};">{ap_hi}/{ap_lo}</h2>
             <p>Status: <strong style="color: {bp_color};">{bp_status}</strong></p>
             <p>{bp_desc}</p>
@@ -461,215 +474,206 @@ with tab1:
                     
                     st.session_state.predictions_history.append(st.session_state.current_prediction)
                     
-                    # Display results in expander
-                    with st.expander("📊 View Detailed Results", expanded=True):
-                        # Create result columns
-                        col_res1, col_res2 = st.columns(2)
+                    # Display results
+                    st.markdown("## 📊 Assessment Results")
+                    
+                    # Determine risk level
+                    if probability >= 70:
+                        risk_level = "Critical"
+                        risk_class = "risk-critical"
+                        risk_message = "⚠️ Immediate attention recommended"
+                    elif probability >= 50:
+                        risk_level = "High"
+                        risk_class = "risk-high"
+                        risk_message = "⚡ High risk detected"
+                    elif probability >= 30:
+                        risk_level = "Moderate"
+                        risk_class = "risk-moderate"
+                        risk_message = "⚖️ Moderate risk - Take action"
+                    else:
+                        risk_level = "Low"
+                        risk_class = "risk-low"
+                        risk_message = "✅ Low risk - Maintain healthy habits"
+                    
+                    # Progress bar for risk
+                    st.progress(probability/100)
+                    st.caption(f"Risk Probability: {probability:.1f}%")
+                    
+                    col_res1, col_res2 = st.columns(2)
+                    
+                    with col_res1:
+                        st.markdown(f"""
+                        <div class="{risk_class}">
+                            <h3>{risk_message}</h3>
+                            <p>Risk Level: <strong>{risk_level}</strong></p>
+                            <p>Model Confidence: {probability:.1f}%</p>
+                            <p>Analysis Time: {datetime.now().strftime("%H:%M:%S")}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col_res2:
+                        st.markdown("#### 🔍 Risk Factor Analysis")
                         
-                        with col_res1:
-                            # Determine risk level
-                            if probability >= 70:
-                                risk_level = "Critical"
-                                risk_class = "risk-critical"
-                                risk_message = "⚠️ Immediate attention recommended"
-                            elif probability >= 50:
-                                risk_level = "High"
-                                risk_class = "risk-high"
-                                risk_message = "⚡ High risk detected"
-                            elif probability >= 30:
-                                risk_level = "Moderate"
-                                risk_class = "risk-moderate"
-                                risk_message = "⚖️ Moderate risk - Take action"
-                            else:
-                                risk_level = "Low"
-                                risk_class = "risk-low"
-                                risk_message = "✅ Low risk - Maintain healthy habits"
-                            
-                            st.markdown(f"""
-                            <div class="{risk_class}">
-                                <h2>{risk_message}</h2>
-                                <h1 style="font-size: 4rem;">{probability:.1f}%</h1>
-                                <p>Risk Level: <strong>{risk_level}</strong></p>
-                                <p>Model Confidence: {probability:.1f}%</p>
-                                <p>Analysis Time: {datetime.now().strftime("%H:%M:%S")}</p>
-                            </div>
-                            """, unsafe_allow_html=True)
+                        risk_factors = []
+                        if age_years > 45:
+                            risk_factors.append(("Age > 45", "➕", str(age_years)))
+                        if bmi >= 25:
+                            risk_factors.append(("Overweight/Obese", "➕", f"{bmi:.1f}"))
+                        if ap_hi >= 140:
+                            risk_factors.append(("High Systolic BP", "➕", str(ap_hi)))
+                        if cholesterol > 1:
+                            risk_factors.append(("High Cholesterol", "➕", ["Normal", "Elevated", "High"][cholesterol-1]))
+                        if smoke == 1:
+                            risk_factors.append(("Smoking", "➕", "Yes"))
+                        if active == 0:
+                            risk_factors.append(("Inactive Lifestyle", "➕", "Yes"))
                         
-                        with col_res2:
-                            # Risk factors breakdown
-                            st.markdown("#### 🔍 Risk Factor Analysis")
-                            
-                            risk_factors = []
-                            if age_years > 45:
-                                risk_factors.append(("Age > 45", "➕", age_years))
-                            if bmi >= 25:
-                                risk_factors.append(("Overweight/Obese", "➕", f"{bmi:.1f}"))
-                            if ap_hi >= 140:
-                                risk_factors.append(("High Systolic BP", "➕", ap_hi))
-                            if cholesterol > 1:
-                                risk_factors.append(("High Cholesterol", "➕", ["Normal", "Elevated", "High"][cholesterol-1]))
-                            if smoke == 1:
-                                risk_factors.append(("Smoking", "➕", "Yes"))
-                            if active == 0:
-                                risk_factors.append(("Inactive Lifestyle", "➕", "Yes"))
-                            
-                            if risk_factors:
-                                for factor, symbol, value in risk_factors:
-                                    st.markdown(f"- {symbol} **{factor}**: {value}")
-                            else:
-                                st.markdown("- ✅ No major risk factors detected")
-                            
-                            # Recommendations
-                            st.markdown("#### 💡 Personalized Recommendations")
-                            
-                            if probability >= 50:
-                                st.markdown("""
-                                - **Consult a doctor** within the next week
-                                - **Monitor blood pressure** daily
-                                - **Start with light exercise** (walking 15-20 min/day)
-                                - **Reduce sodium intake** to <1500mg/day
-                                - **Quit smoking** if applicable
-                                """)
-                            elif probability >= 30:
-                                st.markdown("""
-                                - **Schedule a check-up** in the next month
-                                - **Increase physical activity** to 30 min/day
-                                - **Maintain healthy diet** rich in fruits/vegetables
-                                - **Monitor cholesterol** levels
-                                """)
-                            else:
-                                st.markdown("""
-                                - **Continue healthy habits**
-                                - **Regular exercise** (30-45 min/day)
-                                - **Balanced nutrition**
-                                - **Annual check-ups**
-                                """)
+                        if risk_factors:
+                            for factor, symbol, value in risk_factors:
+                                st.markdown(f"- {symbol} **{factor}**: {value}")
+                        else:
+                            st.markdown("- ✅ No major risk factors detected")
+                        
+                        # Recommendations
+                        st.markdown("#### 💡 Personalized Recommendations")
+                        
+                        if probability >= 50:
+                            st.markdown("""
+                            - **Consult a doctor** within the next week
+                            - **Monitor blood pressure** daily
+                            - **Start with light exercise** (walking 15-20 min/day)
+                            - **Reduce sodium intake** to <1500mg/day
+                            - **Quit smoking** if applicable
+                            """)
+                        elif probability >= 30:
+                            st.markdown("""
+                            - **Schedule a check-up** in the next month
+                            - **Increase physical activity** to 30 min/day
+                            - **Maintain healthy diet** rich in fruits/vegetables
+                            - **Monitor cholesterol** levels
+                            """)
+                        else:
+                            st.markdown("""
+                            - **Continue healthy habits**
+                            - **Regular exercise** (30-45 min/day)
+                            - **Balanced nutrition**
+                            - **Annual check-ups**
+                            """)
                     
             except Exception as e:
                 st.error(f"Analysis error: {e}")
 
-# ===================== TAB 2: Analysis & Charts =====================
+# ===================== TAB 2: Risk Analysis =====================
 with tab2:
-    st.markdown('<div class="section-header">📊 Advanced Analytics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📊 Risk Factor Analysis</div>', unsafe_allow_html=True)
     
     if st.session_state.current_prediction:
-        # Create visualizations
-        col_chart1, col_chart2 = st.columns(2)
+        input_data = st.session_state.current_prediction['input_data']
+        probability = st.session_state.current_prediction['probability']
         
-        with col_chart1:
-            # Risk gauge chart
-            prob = st.session_state.current_prediction['probability']
-            
-            fig = go.Figure(go.Indicator(
-                mode = "gauge+number",
-                value = prob,
-                domain = {'x': [0, 1], 'y': [0, 1]},
-                title = {'text': "Heart Disease Risk Score"},
-                gauge = {
-                    'axis': {'range': [None, 100]},
-                    'bar': {'color': "darkred"},
-                    'steps': [
-                        {'range': [0, 30], 'color': "#e8f5e8"},
-                        {'range': [30, 50], 'color': "#fff8e1"},
-                        {'range': [50, 70], 'color': "#fff3e0"},
-                        {'range': [70, 100], 'color': "#ffebee"}
-                    ],
-                    'threshold': {
-                        'line': {'color': "red", 'width': 4},
-                        'thickness': 0.75,
-                        'value': prob
-                    }
-                }
-            ))
-            
-            fig.update_layout(height=300)
-            st.plotly_chart(fig, use_container_width=True)
+        # Create a simple risk factor table
+        st.markdown("### 📋 Risk Factor Breakdown")
         
-        with col_chart2:
-            # Risk factors radar chart
-            input_data = st.session_state.current_prediction['input_data']
-            
-            categories = ['Age', 'BMI', 'BP Systolic', 'Cholesterol', 'Glucose', 'Smoking', 'Inactivity']
-            
-            # Normalize values for radar chart
-            values = [
-                min(input_data['age_years'] / 80 * 100, 100),
-                min(input_data['bmi'] / 35 * 100, 100),
-                min((input_data['ap_hi'] - 80) / 120 * 100, 100),
-                input_data['cholesterol'] * 33,
-                input_data['gluc'] * 33,
-                input_data['smoke'] * 100,
-                (1 - input_data['active']) * 100
+        risk_data = {
+            'Risk Factor': ['Age', 'BMI', 'Blood Pressure', 'Cholesterol', 'Glucose', 'Smoking', 'Physical Activity'],
+            'Your Value': [
+                f"{input_data['age_years']} years",
+                f"{input_data['bmi']:.1f}",
+                f"{input_data['ap_hi']}/{input_data['ap_lo']}",
+                ["Normal", "Elevated", "High"][input_data['cholesterol']-1],
+                ["Normal", "Elevated", "High"][input_data['gluc']-1],
+                "Yes" if input_data['smoke'] == 1 else "No",
+                "Active" if input_data['active'] == 1 else "Inactive"
+            ],
+            'Risk Level': [
+                "High" if input_data['age_years'] > 45 else "Low",
+                "High" if input_data['bmi'] >= 25 else "Low",
+                "High" if input_data['ap_hi'] >= 140 else "Low",
+                "High" if input_data['cholesterol'] > 1 else "Low",
+                "High" if input_data['gluc'] > 1 else "Low",
+                "High" if input_data['smoke'] == 1 else "Low",
+                "High" if input_data['active'] == 0 else "Low"
             ]
-            
-            fig = go.Figure(data=go.Scatterpolar(
-                r=values,
-                theta=categories,
-                fill='toself',
-                marker=dict(color='rgba(255, 75, 75, 0.6)')
-            ))
-            
-            fig.update_layout(
-                polar=dict(
-                    radialaxis=dict(
-                        visible=True,
-                        range=[0, 100]
-                    )),
-                showlegend=False,
-                height=300
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
+        }
         
-        # Historical trend chart
-        if len(st.session_state.predictions_history) > 1:
-            st.markdown("#### 📈 Your Risk Trend")
-            
-            hist_data = pd.DataFrame(st.session_state.predictions_history)
-            hist_data['timestamp'] = pd.to_datetime(hist_data['timestamp'])
-            
-            fig = px.line(hist_data, x='timestamp', y='probability',
-                         title='Risk Assessment History',
-                         labels={'probability': 'Risk Probability (%)', 
-                                'timestamp': 'Assessment Date'})
-            
-            fig.update_traces(line=dict(color='#ff4b4b', width=3))
-            fig.add_hline(y=50, line_dash="dash", line_color="orange", 
-                         annotation_text="High Risk Threshold")
-            
-            st.plotly_chart(fig, use_container_width=True)
+        risk_df = pd.DataFrame(risk_data)
         
-        # Comparison with population
-        st.markdown("#### 👥 Comparison with Population")
+        # Color code the risk levels
+        def color_risk(val):
+            if val == "High":
+                return 'background-color: #ffcccc'
+            elif val == "Low":
+                return 'background-color: #ccffcc'
+            return ''
         
-        # Simulated population data
-        np.random.seed(42)
-        population_risk = np.random.normal(35, 15, 1000)
-        population_risk = np.clip(population_risk, 0, 100)
+        styled_df = risk_df.style.applymap(color_risk, subset=['Risk Level'])
+        st.dataframe(styled_df, use_container_width=True)
         
-        fig = go.Figure()
-        fig.add_trace(go.Histogram(
-            x=population_risk,
-            name='Population',
-            opacity=0.7,
-            marker_color='#0066cc'
-        ))
+        # Risk factors count
+        high_risk_count = sum(1 for r in risk_data['Risk Level'] if r == "High")
         
-        fig.add_vline(x=prob, line_dash="dash", line_color="red",
-                     annotation_text=f"Your Risk: {prob:.1f}%",
-                     annotation_position="top")
+        col_stat1, col_stat2, col_stat3 = st.columns(3)
+        with col_stat1:
+            st.metric("High Risk Factors", high_risk_count)
+        with col_stat2:
+            st.metric("Overall Risk", f"{probability:.1f}%")
+        with col_stat3:
+            risk_category = "High" if probability >= 50 else "Moderate" if probability >= 30 else "Low"
+            st.metric("Risk Category", risk_category)
         
-        fig.update_layout(
-            title='Your Risk vs Population Distribution',
-            xaxis_title='Risk Probability (%)',
-            yaxis_title='Frequency',
-            height=400
-        )
+        # Recommendations based on specific risk factors
+        st.markdown("### 🎯 Targeted Recommendations")
         
-        st.plotly_chart(fig, use_container_width=True)
+        if input_data['bmi'] >= 25:
+            with st.expander("🏋️ Weight Management"):
+                st.markdown("""
+                - Aim to lose 5-10% of body weight
+                - Set a goal BMI of <25
+                - Try intermittent fasting or portion control
+                - Consider consulting a nutritionist
+                """)
         
+        if input_data['ap_hi'] >= 140:
+            with st.expander("💓 Blood Pressure Control"):
+                st.markdown("""
+                - Reduce sodium intake to <1500mg/day
+                - Try the DASH diet
+                - Limit alcohol consumption
+                - Practice stress reduction techniques
+                - Monitor BP daily
+                """)
+        
+        if input_data['cholesterol'] > 1:
+            with st.expander("🥗 Cholesterol Management"):
+                st.markdown("""
+                - Increase soluble fiber intake
+                - Choose healthy fats (olive oil, nuts, avocados)
+                - Limit saturated and trans fats
+                - Eat more omega-3 fatty acids (fish, flaxseed)
+                """)
+        
+        if input_data['smoke'] == 1:
+            with st.expander("🚭 Smoking Cessation"):
+                st.markdown("""
+                - Consider nicotine replacement therapy
+                - Join a support group
+                - Try the "cold turkey" approach
+                - Use smoking cessation apps
+                - Benefits begin within 20 minutes of quitting!
+                """)
+        
+        if input_data['active'] == 0:
+            with st.expander("🏃 Physical Activity"):
+                st.markdown("""
+                - Start with 10-15 minute walks daily
+                - Gradually increase to 30 minutes
+                - Try different activities (swimming, cycling, yoga)
+                - Use a fitness tracker for motivation
+                - Find an exercise buddy
+                """)
+                
     else:
-        st.info("👆 Complete an assessment in the 'Health Assessment' tab to see detailed analytics!")
+        st.info("👆 Complete an assessment in the 'Health Assessment' tab to see risk analysis!")
 
 # ===================== TAB 3: Education =====================
 with tab3:
@@ -706,26 +710,6 @@ with tab3:
         - Physical inactivity
         - Unhealthy diet
         """)
-        
-        # Interactive BMI chart
-        st.markdown("### 📊 BMI Categories")
-        bmi_data = pd.DataFrame({
-            'Category': ['Underweight', 'Normal', 'Overweight', 'Obese'],
-            'Range': ['< 18.5', '18.5 - 24.9', '25 - 29.9', '≥ 30'],
-            'Color': ['#ffc107', '#4caf50', '#ff9800', '#f44336']
-        })
-        
-        fig = go.Figure(data=[go.Table(
-            header=dict(values=['Category', 'BMI Range', 'Risk Level'],
-                       fill_color='paleturquoise',
-                       align='left'),
-            cells=dict(values=[bmi_data.Category, bmi_data.Range, 
-                              ['Low', 'Low', 'Moderate', 'High']],
-                      fill_color=[['#fff3cd', '#d4edda', '#fff3cd', '#f8d7da']],
-                      align='left'))
-        ])
-        
-        st.plotly_chart(fig, use_container_width=True)
     
     with col_edu2:
         st.markdown("""
@@ -758,44 +742,54 @@ with tab3:
         - 1 drink/day for women
         - 2 drinks/day for men
         """)
-        
-        # Blood pressure chart
-        st.markdown("### 💓 Blood Pressure Categories")
-        bp_data = pd.DataFrame({
-            'Category': ['Normal', 'Elevated', 'High BP Stage 1', 'High BP Stage 2', 'Crisis'],
+    
+    # Educational tables
+    st.markdown("### 📊 Health Indicators Reference")
+    
+    col_table1, col_table2 = st.columns(2)
+    
+    with col_table1:
+        st.markdown("#### BMI Categories")
+        bmi_table = pd.DataFrame({
+            'Category': ['Underweight', 'Normal', 'Overweight', 'Obese'],
+            'BMI Range': ['< 18.5', '18.5 - 24.9', '25 - 29.9', '≥ 30'],
+            'Risk Level': ['Low', 'Low', 'Moderate', 'High']
+        })
+        st.dataframe(bmi_table, use_container_width=True)
+    
+    with col_table2:
+        st.markdown("#### Blood Pressure Categories")
+        bp_table = pd.DataFrame({
+            'Category': ['Normal', 'Elevated', 'Stage 1 HTN', 'Stage 2 HTN', 'Crisis'],
             'Systolic': ['<120', '120-129', '130-139', '140-180', '>180'],
             'Diastolic': ['<80', '<80', '80-89', '90-120', '>120'],
-            'Action': ['Maintain', 'Lifestyle changes', 'Consult doctor', 'Medical help', 'Emergency!']
+            'Action': ['Maintain', 'Lifestyle', 'Consult MD', 'Medical Help', 'Emergency!']
         })
+        st.dataframe(bp_table, use_container_width=True)
+    
+    # Interactive quiz
+    st.markdown("### 📝 Quick Knowledge Check")
+    with st.expander("Test Your Heart Health Knowledge"):
+        q1 = st.radio("1. What is a healthy BMI range?", 
+                     ["< 18.5", "18.5 - 24.9", "25 - 29.9", "> 30"])
+        if q1 == "18.5 - 24.9":
+            st.success("✅ Correct!")
+        elif q1:
+            st.error("❌ Try again. Healthy BMI is 18.5-24.9")
         
-        fig = go.Figure(data=[go.Table(
-            header=dict(values=['Category', 'Systolic', 'Diastolic', 'Recommended Action'],
-                       fill_color='lightcoral',
-                       align='left'),
-            cells=dict(values=[bp_data.Category, bp_data.Systolic, 
-                              bp_data.Diastolic, bp_data.Action],
-                      fill_color='lightgrey',
-                      align='left'))
-        ])
+        q2 = st.radio("2. How much exercise is recommended weekly?",
+                     ["30 minutes", "75 minutes", "150 minutes", "300 minutes"])
+        if q2 == "150 minutes":
+            st.success("✅ Correct!")
+        elif q2:
+            st.error("❌ 150 minutes of moderate activity is recommended")
         
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Interactive quiz
-        st.markdown("### 📝 Quick Knowledge Check")
-        with st.expander("Test Your Heart Health Knowledge"):
-            q1 = st.radio("1. What is a healthy BMI range?", 
-                         ["< 18.5", "18.5 - 24.9", "25 - 29.9", "> 30"])
-            if q1 == "18.5 - 24.9":
-                st.success("✅ Correct!")
-            elif q1:
-                st.error("❌ Try again. Healthy BMI is 18.5-24.9")
-            
-            q2 = st.radio("2. How much exercise is recommended weekly?",
-                         ["30 minutes", "75 minutes", "150 minutes", "300 minutes"])
-            if q2 == "150 minutes":
-                st.success("✅ Correct!")
-            elif q2:
-                st.error("❌ 150 minutes of moderate activity is recommended")
+        q3 = st.radio("3. What is considered normal blood pressure?",
+                     ["< 120/80", "< 130/80", "< 140/90", "< 150/90"])
+        if q3 == "< 120/80":
+            st.success("✅ Correct!")
+        elif q3:
+            st.error("❌ Normal BP is < 120/80 mmHg")
 
 # ===================== TAB 4: History =====================
 with tab4:
@@ -879,12 +873,12 @@ with col_foot3:
     This tool is for educational purposes only. 
     Always consult healthcare professionals for medical advice.
     
-    *Built by Junayed Bin Karim*
+    *Built by Junayed Bin Karim | Final Project - Machine Learning Bootcamp*
     """)
 
 # Session state management
 st.markdown("---")
-with st.expander("🔧 Developer Options"):
+with st.expander("🔧 Developer Info"):
     st.json({
         "session_id": st.session_state.user_id,
         "model_type": model_type,
