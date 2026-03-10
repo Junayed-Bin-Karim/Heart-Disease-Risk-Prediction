@@ -1,17 +1,23 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
+import gdown
 import joblib
 from datetime import datetime
+import hashlib
+import warnings
+import logging
+
 # -----------------------------
-// সব warning এবং error হাইড করুন
+# সব warning এবং error হাইড করুন
 warnings.filterwarnings('ignore')
 logging.getLogger().setLevel(logging.ERROR)
 
 # -----------------------------
-// Page Config
+# Page Config
 st.set_page_config(
     page_title="Heart Disease Risk Assessment", 
     layout="centered",
@@ -19,7 +25,7 @@ st.set_page_config(
 )
 
 # -----------------------------
-// Custom CSS
+# Custom CSS
 st.markdown("""
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,7 +67,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -----------------------------
-// Session State Initialize
+# Session State Initialize
 if 'predictions_history' not in st.session_state:
     st.session_state.predictions_history = []
 if 'current_prediction' not in st.session_state:
@@ -70,7 +76,7 @@ if 'user_id' not in st.session_state:
     st.session_state.user_id = hashlib.md5(str(datetime.now()).encode()).hexdigest()[:8]
 
 # -----------------------------
-// Model Loading Function
+# Model Loading Function
 @st.cache_resource
 def load_models():
     """ML মডেল লোড বা তৈরি করুন"""
@@ -78,31 +84,31 @@ def load_models():
     scaler_path = "scaler.joblib"
     
     try:
-        // প্রথমে লোকাল ফাইল চেক করুন
+        # প্রথমে লোকাল ফাইল চেক করুন
         if os.path.exists(model_path) and os.path.exists(scaler_path):
             try:
                 model = joblib.load(model_path)
                 scaler = joblib.load(scaler_path)
-                // টেস্ট প্রেডিকশন
+                # টেস্ট প্রেডিকশন
                 test_input = np.random.randn(1, 11)
                 model.predict(test_input)
                 return model, scaler, "trained"
             except Exception as e:
                 st.warning("পুরনো মডেল লোড করা যায়নি, নতুন তৈরি হচ্ছে...")
-                // পুরনো ফাইল ডিলিট করুন
+                # পুরনো ফাইল ডিলিট করুন
                 if os.path.exists(model_path):
                     os.remove(model_path)
                 if os.path.exists(scaler_path):
                     os.remove(scaler_path)
         
-        // Google Drive থেকে ডাউনলোডের চেষ্টা করুন
+        # Google Drive থেকে ডাউনলোডের চেষ্টা করুন
         try:
             url = "https://drive.google.com/uc?id=1ikGCWp47yKL-5UbbpY7JH2M79LPeoVLb"
             gdown.download(url, model_path, quiet=True)
             
             if os.path.exists(model_path):
                 model = joblib.load(model_path)
-                // স্কেলার তৈরি করুন
+                # স্কেলার তৈরি করুন
                 scaler = StandardScaler()
                 dummy_data = np.random.randn(100, 11)
                 scaler.fit(dummy_data)
@@ -111,7 +117,7 @@ def load_models():
         except:
             pass
         
-        // নতুন মডেল তৈরি করুন
+        # নতুন মডেল তৈরি করুন
         np.random.seed(42)
         X_demo = np.random.randn(1000, 11)
         y_demo = (X_demo[:, 0] + X_demo[:, 1] * 0.5 + np.random.randn(1000) * 0.3 > 0).astype(int)
@@ -134,7 +140,7 @@ def load_models():
         return model, scaler, "new"
         
     except Exception as e:
-        // Error হলে fallback মডেল তৈরি করুন
+        # Error হলে fallback মডেল তৈরি করুন
         try:
             scaler = StandardScaler()
             dummy_data = np.random.randn(100, 11)
@@ -148,48 +154,48 @@ def load_models():
             return None, None, "error"
 
 # -----------------------------
-// Model Load করুন
+# Model Load করুন
 with st.spinner("মডেল লোড হচ্ছে..."):
     model, scaler, model_type = load_models()
 
-// Fallback risk calculator (যদি মডেল কাজ না করে)
+# Fallback risk calculator (যদি মডেল কাজ না করে)
 def calculate_risk_fallback(input_data):
     risk_score = 0
     
-    // বয়স (0-25)
+    # বয়স (0-25)
     age = input_data['age_years']
     if age > 60: risk_score += 25
     elif age > 50: risk_score += 20
     elif age > 40: risk_score += 15
     elif age > 30: risk_score += 10
     
-    // BMI (0-20)
+    # BMI (0-20)
     bmi = input_data['bmi']
     if bmi > 30: risk_score += 20
     elif bmi > 25: risk_score += 10
     
-    // রক্তচাপ (0-20)
+    # রক্তচাপ (0-20)
     if input_data['ap_hi'] > 160: risk_score += 20
     elif input_data['ap_hi'] > 140: risk_score += 15
     elif input_data['ap_hi'] > 130: risk_score += 10
     
-    // কোলেস্টেরল (0-15)
+    # কোলেস্টেরল (0-15)
     if input_data['cholesterol'] == 3: risk_score += 15
     elif input_data['cholesterol'] == 2: risk_score += 8
     
-    // গ্লুকোজ (0-10)
+    # গ্লুকোজ (0-10)
     if input_data['gluc'] == 3: risk_score += 10
     elif input_data['gluc'] == 2: risk_score += 5
     
-    // লাইফস্টাইল (0-30)
+    # লাইফস্টাইল (0-30)
     if input_data['smoke'] == 1: risk_score += 15
     if input_data['alco'] == 1: risk_score += 5
     if input_data['active'] == 0: risk_score += 10
     
     return min(risk_score, 95)
 
-// -----------------------------
-// Header Section
+# -----------------------------
+# Header Section
 st.markdown("""
 <div class="header">
     <h1>❤️ হৃদরোগ ঝুঁকি মূল্যায়ন</h1>
@@ -197,7 +203,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-// Metrics Row
+# Metrics Row
 st.markdown(f"""
 <div class="metric-grid">
     <div class="metric-card">
@@ -223,7 +229,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-// Info Box
+# Info Box
 st.markdown("""
 <div class="info-box">
     <strong>⚠️ গুরুত্বপূর্ণ:</strong> এই টুল মেশিন লার্নিং মডেল ব্যবহার করে বিশ্লেষণ করে। 
@@ -231,15 +237,15 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-// -----------------------------
-// Main Tabs
+# -----------------------------
+# Main Tabs
 tab1, tab2, tab3, tab4 = st.tabs(["📝 স্বাস্থ্য মূল্যায়ন", "📊 ঝুঁকি বিশ্লেষণ", "📚 শিক্ষা", "📜 ইতিহাস"])
 
-// ===================== TAB 1: Health Assessment =====================
+# ===================== TAB 1: Health Assessment =====================
 with tab1:
     st.markdown('<div class="section-header">📝 ব্যক্তিগত স্বাস্থ্য তথ্য</div>', unsafe_allow_html=True)
     
-    // Personal Information
+    # Personal Information
     with st.container():
         st.subheader("👤 জনমিতিক তথ্য")
         col1, col2 = st.columns(2)
@@ -248,7 +254,7 @@ with tab1:
         with col2:
             gender = st.selectbox("লিঙ্গ", [1, 2], format_func=lambda x: "পুরুষ" if x == 1 else "মহিলা", key="gender")
     
-    // Physical Measurements
+    # Physical Measurements
     with st.container():
         st.subheader("📏 শারীরিক পরিমাপ")
         col1, col2 = st.columns(2)
@@ -271,7 +277,7 @@ with tab1:
             </div>
             """, unsafe_allow_html=True)
     
-    // Vital Signs
+    # Vital Signs
     with st.container():
         st.subheader("💓 শারীরিক লক্ষণ")
         col1, col2 = st.columns(2)
@@ -280,7 +286,7 @@ with tab1:
         with col2:
             ap_lo = st.number_input("ডায়াস্টোলিক BP (mmHg)", min_value=50, max_value=150, value=80, key="ap_lo")
     
-    // Laboratory Values
+    # Laboratory Values
     with st.container():
         st.subheader("🧪 ল্যাবরেটরি মান")
         col1, col2 = st.columns(2)
@@ -291,7 +297,7 @@ with tab1:
             gluc = st.selectbox("গ্লুকোজ", [1, 2, 3],
                               format_func=lambda x: ["স্বাভাবিক", "উচ্চ", "অত্যধিক"][x-1], key="gluc")
     
-    // Lifestyle Factors
+    # Lifestyle Factors
     with st.container():
         st.subheader("🏃 জীবনযাত্রা")
         col1, col2, col3 = st.columns(3)
@@ -302,14 +308,14 @@ with tab1:
         with col3:
             active = st.radio("ব্যায়াম", [1, 0], format_func=lambda x: "হ্যাঁ" if x == 1 else "না", key="active")
     
-    // Assessment Button
+    # Assessment Button
     st.markdown("<br>", unsafe_allow_html=True)
     predict_btn = st.button("🔮 ঝুঁকি মূল্যায়ন করুন", type="primary", use_container_width=True)
     
     if predict_btn:
         with st.spinner("🤖 ML মডেল বিশ্লেষণ করছে..."):
             try:
-                // ডেটা প্রস্তুত
+                # ডেটা প্রস্তুত
                 input_data = {
                     'age_years': age_years,
                     'gender': gender,
@@ -325,7 +331,7 @@ with tab1:
                     'active': active
                 }
                 
-                // ML মডেল ব্যবহার
+                # ML মডেল ব্যবহার
                 if model is not None and scaler is not None:
                     features = ['gender', 'weight', 'ap_hi', 'ap_lo', 'cholesterol', 
                                'gluc', 'smoke', 'alco', 'active', 'age_years', 'height_m']
@@ -347,10 +353,10 @@ with tab1:
                     X_scaled = scaler.transform(df[features])
                     probability = model.predict_proba(X_scaled)[0][1] * 100
                 else:
-                    // Fallback ব্যবহার
+                    # Fallback ব্যবহার
                     probability = calculate_risk_fallback(input_data)
                 
-                // সেভ করুন
+                # সেভ করুন
                 st.session_state.current_prediction = {
                     'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     'probability': probability,
@@ -359,7 +365,7 @@ with tab1:
                 
                 st.session_state.predictions_history.append(st.session_state.current_prediction)
                 
-                // ফলাফল দেখান
+                # ফলাফল দেখান
                 st.markdown('<div class="section-header">📋 মূল্যায়নের ফলাফল</div>', unsafe_allow_html=True)
                 
                 if probability >= 70:
@@ -390,7 +396,7 @@ with tab1:
             except Exception as e:
                 st.error("দুঃখিত, আবার চেষ্টা করুন")
 
-// ===================== TAB 2: Risk Analysis =====================
+# ===================== TAB 2: Risk Analysis =====================
 with tab2:
     st.markdown('<div class="section-header">📊 ঝুঁকি বিশ্লেষণ</div>', unsafe_allow_html=True)
     
@@ -398,7 +404,7 @@ with tab2:
         data = st.session_state.current_prediction['input_data']
         prob = st.session_state.current_prediction['probability']
         
-        // রিস্ক ফ্যাক্টর
+        # রিস্ক ফ্যাক্টর
         factors = []
         factors.append(["বয়স", f"{data['age_years']} বছর", "উচ্চ" if data['age_years'] > 45 else "নিম্ন"])
         factors.append(["বিএমআই", f"{data['bmi']:.1f}", "উচ্চ" if data['bmi'] >= 25 else "নিম্ন"])
@@ -416,9 +422,9 @@ with tab2:
             elif val == "নিম্ন": return 'background-color: #ccffcc'
             return ''
         
-        st.dataframe(df.style.applymap(color, subset=['ঝুঁki']), use_container_width=True)
+        st.dataframe(df.style.applymap(color, subset=['ঝুঁকি']), use_container_width=True)
         
-        // মেট্রিক্স
+        # মেট্রিক্স
         col1, col2, col3 = st.columns(3)
         with col1:
             high_count = sum(1 for f in factors if f[2] == "উচ্চ")
@@ -429,7 +435,7 @@ with tab2:
             cat = "জরুরি" if prob >= 70 else "উচ্চ" if prob >= 50 else "মাঝারি" if prob >= 30 else "নিম্ন"
             st.metric("ঝুঁকির মাত্রা", cat)
         
-        // সুপারিশ
+        # সুপারিশ
         st.markdown("### 📝 পরামর্শ")
         if data['bmi'] >= 25:
             st.info("⚖️ ওজন কমান - নিয়মিত ব্যায়াম ও সঠিক খাদ্যাভ্যাস")
@@ -444,7 +450,7 @@ with tab2:
     else:
         st.info("প্রথমে মূল্যায়ন ট্যাবে ডেটা দিন")
 
-// ===================== TAB 3: Education =====================
+# ===================== TAB 3: Education =====================
 with tab3:
     st.markdown('<div class="section-header">📚 হৃদরোগ শিক্ষা</div>', unsafe_allow_html=True)
     
@@ -470,7 +476,7 @@ with tab3:
         - ওজন নিয়ন্ত্রণ
         """)
     
-    // রেফারেন্স টেবিল
+    # রেফারেন্স টেবিল
     st.markdown("### 📊 রেফারেন্স টেবিল")
     col1, col2 = st.columns(2)
     
@@ -488,7 +494,7 @@ with tab3:
         })
         st.dataframe(bp_data, use_container_width=True)
 
-// ===================== TAB 4: History =====================
+# ===================== TAB 4: History =====================
 with tab4:
     st.markdown('<div class="section-header">📜 মূল্যায়নের ইতিহাস</div>', unsafe_allow_html=True)
     
@@ -514,8 +520,8 @@ with tab4:
     else:
         st.info("কোনো ইতিহাস নেই")
 
-// -----------------------------
-// Footer
+# -----------------------------
+# Footer
 st.markdown("""
 <div class="footer">
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
@@ -540,8 +546,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-// -----------------------------
-// System Info
+# -----------------------------
+# System Info
 with st.expander("ℹ️ সিস্টেম তথ্য"):
     st.json({
         "model_type": model_type,
@@ -550,4 +556,3 @@ with st.expander("ℹ️ সিস্টেম তথ্য"):
         "total_assessments": len(st.session_state.predictions_history),
         "session_id": st.session_state.user_id
     })
-
