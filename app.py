@@ -15,7 +15,6 @@ import json
 # -----------------------------
 st.set_page_config(
     page_title="Heart Disease Risk Assessment", 
-    page_icon="❤️", 
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -882,3 +881,4 @@ with st.expander("System Information"):
         "session_start": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "application_version": "2.0.0"
     })
+
