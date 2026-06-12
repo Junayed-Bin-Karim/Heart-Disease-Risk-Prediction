@@ -1,6 +1,6 @@
-import gdownstreamlit
+streamlit
 pandas
 numpy
 scikit-learn
-gdown
 joblib
+gdown
