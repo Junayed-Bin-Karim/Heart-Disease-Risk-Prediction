@@ -3,11 +3,10 @@ import pandas as pd
 import numpy as np
 import os
 import pickle
-import joblib
-import gdown
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+import gdown
 
 # -----------------------------
 # 🎯 Page Config
@@ -71,6 +70,7 @@ def load_models():
         # Try to load existing models
         if os.path.exists(scaler_path):
             try:
+                import joblib
                 scaler = joblib.load(scaler_path)
                 st.success("Scaler loaded successfully!")
             except Exception as e:
@@ -78,6 +78,7 @@ def load_models():
         
         if os.path.exists(model_path):
             try:
+                import joblib
                 model = joblib.load(model_path)
                 st.success(" Main model loaded successfully!")
             except Exception as e:
@@ -151,11 +152,11 @@ st.markdown("""
 st.markdown('<div class="main-header">Heart Disease Risk Assessment</div>', unsafe_allow_html=True)
 
 st.markdown("""
-Assess your risk of heart disease based on important health indicators and lifestyle factors.  
-Our model is trained using over 70,000 scientific data points.  
+আপনার হৃদরোগ ঝুঁকি মূল্যায়ন করুন গুরুত্বপূর্ণ স্বাস্থ্য সূচক এবং জীবনধারার ভিত্তিতে।  
+আমাদের মডেলটি ৭০,০০০ এর বেশি বৈজ্ঞানিক ডেটা ব্যবহার করে প্রশিক্ষিত।  
 
-Created by **Junayed Bin Karim**
 """)
+
 
 # Show model status
 if model is not None:
@@ -213,14 +214,14 @@ with col4:
                        format_func=lambda x: ["Normal", "Above Normal", "Well Above Normal"][x-1])
 
 with col5:
-    st.subheader("Habits")
+    st.subheader("🚬 Habits")
     smoke = st.radio("**Smoking Status**", [0, 1], 
                     format_func=lambda x: " Non-smoker" if x == 0 else " Smoker")
     alco = st.radio("**Alcohol Consumption**", [0, 1], 
                    format_func=lambda x: " Non-drinker" if x == 0 else " Drinker")
 
 with col6:
-    st.subheader(" Activity")
+    st.subheader("🏃 Activity")
     active = st.radio("**Physical Activity**", [1, 0], 
                      format_func=lambda x: " Active" if x == 1 else " Not Active")
 
@@ -365,3 +366,5 @@ st.markdown("""
 
 *Built by Junayed Bin Karim*
 """)
+
+
