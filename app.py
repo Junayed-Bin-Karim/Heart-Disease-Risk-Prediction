@@ -3,10 +3,11 @@ import pandas as pd
 import numpy as np
 import os
 import pickle
+import joblib
+import gdown
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-import gdown
 
 # -----------------------------
 # 🎯 Page Config
@@ -70,7 +71,6 @@ def load_models():
         # Try to load existing models
         if os.path.exists(scaler_path):
             try:
-                import joblib
                 scaler = joblib.load(scaler_path)
                 st.success("Scaler loaded successfully!")
             except Exception as e:
@@ -78,7 +78,6 @@ def load_models():
         
         if os.path.exists(model_path):
             try:
-                import joblib
                 model = joblib.load(model_path)
                 st.success(" Main model loaded successfully!")
             except Exception as e:
@@ -157,8 +156,6 @@ Our model is trained using over 70,000 scientific data points.
 
 Created by **Junayed Bin Karim**
 """)
-
-
 
 # Show model status
 if model is not None:
@@ -368,7 +365,3 @@ st.markdown("""
 
 *Built by Junayed Bin Karim*
 """)
-
-
-
-
