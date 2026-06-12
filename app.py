@@ -152,10 +152,12 @@ st.markdown("""
 st.markdown('<div class="main-header">Heart Disease Risk Assessment</div>', unsafe_allow_html=True)
 
 st.markdown("""
-আপনার হৃদরোগ ঝুঁকি মূল্যায়ন করুন গুরুত্বপূর্ণ স্বাস্থ্য সূচক এবং জীবনধারার ভিত্তিতে।  
-আমাদের মডেলটি ৭০,০০০ এর বেশি বৈজ্ঞানিক ডেটা ব্যবহার করে প্রশিক্ষিত।  
+Assess your risk of heart disease based on important health indicators and lifestyle factors.  
+Our model is trained using over 70,000 scientific data points.  
 
+Created by **Junayed Bin Karim**
 """)
+
 
 
 # Show model status
@@ -214,14 +216,14 @@ with col4:
                        format_func=lambda x: ["Normal", "Above Normal", "Well Above Normal"][x-1])
 
 with col5:
-    st.subheader("🚬 Habits")
+    st.subheader("Habits")
     smoke = st.radio("**Smoking Status**", [0, 1], 
                     format_func=lambda x: " Non-smoker" if x == 0 else " Smoker")
     alco = st.radio("**Alcohol Consumption**", [0, 1], 
                    format_func=lambda x: " Non-drinker" if x == 0 else " Drinker")
 
 with col6:
-    st.subheader("🏃 Activity")
+    st.subheader(" Activity")
     active = st.radio("**Physical Activity**", [1, 0], 
                      format_func=lambda x: " Active" if x == 1 else " Not Active")
 
@@ -366,5 +368,7 @@ st.markdown("""
 
 *Built by Junayed Bin Karim*
 """)
+
+
 
 
